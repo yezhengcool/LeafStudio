@@ -29,7 +29,7 @@ class TvMainActivity : FragmentActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_tv_main)
         
         // 初始化 UI 和数据加载
         setupBrowseFragment()

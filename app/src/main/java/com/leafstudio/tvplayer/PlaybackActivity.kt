@@ -21,6 +21,7 @@ import com.leafstudio.tvplayer.ui.ChannelSidebarAdapter
 import com.leafstudio.tvplayer.ui.RouteSidebarAdapter
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.leafstudio.tvplayer.utils.UpdateManager
 
 // 新增标记，用于 RTMP 自动切换防止递归
 private var hasAutoSwitchedForRtmp = false
@@ -120,6 +121,9 @@ class PlaybackActivity : FragmentActivity() {
         // 加载跑马灯提示
         loadMarqueeText()
         
+        // 检查更新
+        UpdateManager.checkUpdate(this, false)
+        
         // 设置全屏模式
         window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                 or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -168,6 +172,9 @@ class PlaybackActivity : FragmentActivity() {
                 val index = allChannels?.indexOfFirst { it.id == lastChannelId } ?: -1
                 if (index >= 0) {
                     currentChannelIndex = index
+                    // 恢复上次选择的线路
+                    val lastRouteIndex = prefs.getInt("last_route_${lastChannelId}", 0)
+                    allChannels?.get(index)?.currentRouteIndex = lastRouteIndex
                 }
             }
         }
@@ -784,11 +791,14 @@ class PlaybackActivity : FragmentActivity() {
         currentChannelIndex = index
         hasTriedAllRoutes = false
         
-        // 保存当前频道ID
+        // 保存当前频道ID和线路索引
         val currentChannel = getCurrentChannel()
         if (currentChannel != null) {
             val prefs = getSharedPreferences("settings", MODE_PRIVATE)
-            prefs.edit().putString("last_channel_id", currentChannel.id).apply()
+            prefs.edit()
+                .putString("last_channel_id", currentChannel.id)
+                .putInt("last_route_${currentChannel.id}", currentChannel.currentRouteIndex)
+                .apply()
         }
         
         // 更新适配器
@@ -815,6 +825,12 @@ class PlaybackActivity : FragmentActivity() {
         
         if (currentChannel.switchToRoute(routeIndex)) {
             hasTriedAllRoutes = false
+            
+            // 保存线路选择
+            val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+            prefs.edit()
+                .putInt("last_route_${currentChannel.id}", routeIndex)
+                .apply()
             
             // 更新适配器
             routeSidebarAdapter?.updateCurrentRoute(routeIndex)
@@ -1259,22 +1275,27 @@ class PlaybackActivity : FragmentActivity() {
                 releasePlayer()
                 initializePlayer()
             } else {
-                // 已尝试所有线路
+                // 已尝试所有线路，切换到下一个频道
                 hasTriedAllRoutes = true
-                Toast.makeText(
-                    this,
-                    getString(R.string.all_routes_failed),
-                    Toast.LENGTH_LONG
-                ).show()
-                finish()
+                switchToNextChannel()
             }
         } else {
-            // 只有一个线路或已尝试所有线路
-            Toast.makeText(
-                this,
-                getString(R.string.error_playing_video) + ": ${error.message}",
-                Toast.LENGTH_LONG
-            ).show()
+            // 只有一个线路或已尝试所有线路，切换到下一个频道
+            switchToNextChannel()
+        }
+    }
+
+    /**
+     * 切换到下一个频道
+     */
+    private fun switchToNextChannel() {
+        val totalChannels = allChannels?.size ?: 0
+        if (totalChannels > 0) {
+            val nextIndex = (currentChannelIndex + 1) % totalChannels
+            Toast.makeText(this, "当前频道播放失败，自动切换下一台", Toast.LENGTH_SHORT).show()
+            switchToChannel(nextIndex)
+        } else {
+            Toast.makeText(this, "无可用频道", Toast.LENGTH_LONG).show()
             finish()
         }
     }
@@ -1412,9 +1433,92 @@ class PlaybackActivity : FragmentActivity() {
         
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         
-        // 软件更新按钮
-        dialogView.findViewById<android.widget.Button>(R.id.btn_check_update).setOnClickListener {
-            Toast.makeText(this, "检查更新功能待实现\n需要配置更新服务器地址", Toast.LENGTH_LONG).show()
+        // 获取当前版本
+        val currentVersion = try {
+            packageManager.getPackageInfo(packageName, 0).versionName
+        } catch (e: Exception) {
+            "未知"
+        }
+        
+        // 检查更新并显示版本信息
+        val updateIndicator = dialogView.findViewById<View>(R.id.update_indicator)
+        val versionInfo = dialogView.findViewById<TextView>(R.id.tv_version_info)
+        
+        // 后台检查更新
+        Thread {
+            try {
+                val client = okhttp3.OkHttpClient.Builder()
+                    .connectTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
+                
+                val request = okhttp3.Request.Builder()
+                    .url("https://yezheng.dpdns.org/tv/update/version.json")
+                    .build()
+                
+                val response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val jsonStr = response.body?.string()
+                    if (jsonStr != null) {
+                        val json = org.json.JSONObject(jsonStr)
+                        val latestVersion = json.optString("versionName", "")
+                        val latestVersionCode = json.optInt("versionCode", 0)
+                        val currentVersionCode = packageManager.getPackageInfo(packageName, 0).versionCode
+                        
+                        runOnUiThread {
+                            if (latestVersionCode > currentVersionCode) {
+                                // 有新版本，显示小红点和版本信息
+                                updateIndicator.visibility = View.VISIBLE
+                                versionInfo.visibility = View.VISIBLE
+                                versionInfo.text = "$currentVersion → $latestVersion"
+                                versionInfo.setTextColor(android.graphics.Color.parseColor("#4CAF50"))
+                            } else {
+                                // 无更新，只显示当前版本
+                                versionInfo.visibility = View.VISIBLE
+                                versionInfo.text = "v$currentVersion"
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                runOnUiThread {
+                    versionInfo.visibility = View.VISIBLE
+                    versionInfo.text = "v$currentVersion"
+                }
+            }
+        }.start()
+        
+        // 更新登录状态显示
+        val loginStatus = dialogView.findViewById<TextView>(R.id.tv_login_status)
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        val isLoggedIn = prefs.getBoolean("is_logged_in", false)
+        val username = prefs.getString("username", "")
+        
+        if (isLoggedIn && !username.isNullOrEmpty()) {
+            loginStatus.text = username
+            loginStatus.setTextColor(android.graphics.Color.parseColor("#4CAF50"))
+        } else {
+            loginStatus.text = "未登录"
+            loginStatus.setTextColor(android.graphics.Color.parseColor("#999999"))
+        }
+        
+        // 用户登录按钮
+        dialogView.findViewById<View>(R.id.btn_user_login).setOnClickListener {
+            dialog.setOnDismissListener(null)
+            dialog.dismiss()
+            if (isLoggedIn) {
+                // 已登录，显示用户信息和退出选项
+                showUserInfoDialog()
+            } else {
+                // 未登录，显示登录对话框
+                showLoginDialog()
+            }
+        }
+        
+        // 软件更新按钮（现在是 RelativeLayout）
+        dialogView.findViewById<View>(R.id.btn_check_update).setOnClickListener {
+            UpdateManager.checkUpdate(this, true)
             dialog.dismiss()
         }
         
@@ -1429,6 +1533,13 @@ class PlaybackActivity : FragmentActivity() {
             dialog.setOnDismissListener(null)
             dialog.dismiss()
             showCitySettingDialog()
+        }
+
+        // 清空所有设置按钮
+        dialogView.findViewById<android.widget.Button>(R.id.btn_clear_settings).setOnClickListener {
+            dialog.setOnDismissListener(null)
+            dialog.dismiss()
+            showClearSettingsDialog()
         }
 
         // 关于按钮
@@ -1522,6 +1633,46 @@ class PlaybackActivity : FragmentActivity() {
     }
     
     /**
+     * 显示清空设置确认对话框
+     */
+    private fun showClearSettingsDialog() {
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("清空所有设置")
+            .setMessage("确定要清空所有设置吗？\n\n这将清除：\n• 上次播放的频道\n• 所有频道的线路选择\n• 解码器设置\n• 自定义城市设置\n\n此操作无法撤销！")
+            .setPositiveButton("确定清空") { _, _ ->
+                clearAllSettings()
+            }
+            .setNegativeButton("取消", null)
+            .create()
+        
+        dialog.setOnDismissListener {
+            showBottomControls()
+        }
+        
+        hideBottomControls()
+        dialog.show()
+    }
+    
+    /**
+     * 清空所有设置
+     */
+    private fun clearAllSettings() {
+        try {
+            val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+            prefs.edit().clear().apply()
+            
+            Toast.makeText(this, "所有设置已清空\n将使用默认设置", Toast.LENGTH_LONG).show()
+            
+            // 可选：重启应用以应用默认设置
+            // 或者提示用户重启应用
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "清空设置失败: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    
+    /**
  * 切换画面比例
  */
 private fun toggleAspectRatio() {
@@ -1605,5 +1756,253 @@ private fun toggleAspectRatio() {
                 e.printStackTrace()
             }
         }.start()
+    }
+    
+    /**
+     * 显示登录对话框
+     */
+    private fun showLoginDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_login, null)
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(true)
+            .create()
+        
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        
+        val qrcodeImageView = dialogView.findViewById<android.widget.ImageView>(R.id.iv_qrcode)
+        val loadingProgress = dialogView.findViewById<android.widget.ProgressBar>(R.id.pb_loading)
+        val hintTextView = dialogView.findViewById<TextView>(R.id.tv_login_hint)
+        val refreshButton = dialogView.findViewById<android.widget.Button>(R.id.btn_refresh_qrcode)
+        val closeButton = dialogView.findViewById<android.widget.Button>(R.id.btn_close_login)
+        
+        var loginTicket = ""
+        var checkLoginHandler: Handler? = null
+        var checkLoginRunnable: Runnable? = null
+        
+        // 生成二维码
+        fun generateQRCode() {
+            loadingProgress.visibility = View.VISIBLE
+            qrcodeImageView.visibility = View.GONE
+            refreshButton.visibility = View.GONE
+            hintTextView.text = "正在生成二维码..."
+            
+            Thread {
+                try {
+                    val client = okhttp3.OkHttpClient.Builder()
+                        .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+                        .readTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+                        .build()
+                    
+                    // 请求生成登录二维码
+                    val request = okhttp3.Request.Builder()
+                        .url("https://yezheng.dpdns.org/tv/api/login/qrcode")
+                        .build()
+                    
+                    val response = client.newCall(request).execute()
+                    if (response.isSuccessful) {
+                        val jsonStr = response.body?.string()
+                        if (jsonStr != null) {
+                            val json = org.json.JSONObject(jsonStr)
+                            val qrcodeUrl = json.optString("qrcode_url", "")
+                            loginTicket = json.optString("ticket", "")
+                            
+                            if (qrcodeUrl.isNotEmpty() && loginTicket.isNotEmpty()) {
+                                // 生成二维码图片
+                                val qrcodeBitmap = generateQRCodeBitmap(qrcodeUrl, 500, 500)
+                                
+                                runOnUiThread {
+                                    loadingProgress.visibility = View.GONE
+                                    qrcodeImageView.visibility = View.VISIBLE
+                                    qrcodeImageView.setImageBitmap(qrcodeBitmap)
+                                    hintTextView.text = "请使用微信扫描二维码登录"
+                                    
+                                    // 开始轮询检查登录状态
+                                    startCheckLoginStatus(loginTicket, dialog)
+                                }
+                            } else {
+                                throw Exception("二维码数据无效")
+                            }
+                        }
+                    } else {
+                        throw Exception("服务器响应失败: ${response.code}")
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    runOnUiThread {
+                        loadingProgress.visibility = View.GONE
+                        refreshButton.visibility = View.VISIBLE
+                        hintTextView.text = "二维码生成失败: ${e.message}"
+                        Toast.makeText(this, "二维码生成失败，请重试", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }.start()
+        }
+        
+        // 刷新二维码
+        refreshButton.setOnClickListener {
+            generateQRCode()
+        }
+        
+        // 关闭按钮
+        closeButton.setOnClickListener {
+            dialog.dismiss()
+        }
+        
+        dialog.setOnDismissListener {
+            checkLoginHandler?.removeCallbacks(checkLoginRunnable!!)
+            showBottomControls()
+        }
+        
+        hideBottomControls()
+        dialog.show()
+        
+        // 初始生成二维码
+        generateQRCode()
+    }
+    
+    /**
+     * 生成二维码图片
+     */
+    private fun generateQRCodeBitmap(content: String, width: Int, height: Int): android.graphics.Bitmap {
+        val hints = hashMapOf<com.google.zxing.EncodeHintType, Any>()
+        hints[com.google.zxing.EncodeHintType.CHARACTER_SET] = "UTF-8"
+        hints[com.google.zxing.EncodeHintType.ERROR_CORRECTION] = com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.H
+        hints[com.google.zxing.EncodeHintType.MARGIN] = 1
+        
+        val bitMatrix = com.google.zxing.MultiFormatWriter().encode(
+            content,
+            com.google.zxing.BarcodeFormat.QR_CODE,
+            width,
+            height,
+            hints
+        )
+        
+        val pixels = IntArray(width * height)
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                if (bitMatrix.get(x, y)) {
+                    pixels[y * width + x] = android.graphics.Color.BLACK
+                } else {
+                    pixels[y * width + x] = android.graphics.Color.WHITE
+                }
+            }
+        }
+        
+        val bitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+        bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
+        return bitmap
+    }
+    
+    /**
+     * 开始检查登录状态
+     */
+    private fun startCheckLoginStatus(ticket: String, dialog: androidx.appcompat.app.AlertDialog) {
+        val handler = Handler(Looper.getMainLooper())
+        val runnable = object : Runnable {
+            override fun run() {
+                Thread {
+                    try {
+                        val client = okhttp3.OkHttpClient.Builder()
+                            .connectTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
+                            .readTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
+                            .build()
+                        
+                        val request = okhttp3.Request.Builder()
+                            .url("https://yezheng.dpdns.org/tv/api/login/check?ticket=$ticket")
+                            .build()
+                        
+                        val response = client.newCall(request).execute()
+                        if (response.isSuccessful) {
+                            val jsonStr = response.body?.string()
+                            if (jsonStr != null) {
+                                val json = org.json.JSONObject(jsonStr)
+                                val status = json.optString("status", "")
+                                
+                                when (status) {
+                                    "success" -> {
+                                        // 登录成功
+                                        val username = json.optString("username", "")
+                                        val userId = json.optString("user_id", "")
+                                        val token = json.optString("token", "")
+                                        
+                                        runOnUiThread {
+                                            // 保存登录信息
+                                            val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+                                            prefs.edit().apply {
+                                                putBoolean("is_logged_in", true)
+                                                putString("username", username)
+                                                putString("user_id", userId)
+                                                putString("token", token)
+                                                apply()
+                                            }
+                                            
+                                            Toast.makeText(this@PlaybackActivity, "登录成功！欢迎 $username", Toast.LENGTH_LONG).show()
+                                            dialog.dismiss()
+                                        }
+                                        return@Thread
+                                    }
+                                    "waiting" -> {
+                                        // 继续等待
+                                        handler.postDelayed(this, 2000)
+                                    }
+                                    "expired" -> {
+                                        // 二维码过期
+                                        runOnUiThread {
+                                            Toast.makeText(this@PlaybackActivity, "二维码已过期，请刷新", Toast.LENGTH_SHORT).show()
+                                            dialog.findViewById<android.widget.Button>(R.id.btn_refresh_qrcode)?.visibility = View.VISIBLE
+                                            dialog.findViewById<TextView>(R.id.tv_login_hint)?.text = "二维码已过期，请点击刷新"
+                                        }
+                                        return@Thread
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                    
+                    // 继续检查
+                    handler.postDelayed(this, 2000)
+                }.start()
+            }
+        }
+        
+        handler.postDelayed(runnable, 2000)
+    }
+    
+    /**
+     * 显示用户信息对话框
+     */
+    private fun showUserInfoDialog() {
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        val username = prefs.getString("username", "") ?: ""
+        val userId = prefs.getString("user_id", "") ?: ""
+        
+        val message = "用户名: $username\nID: $userId"
+        
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("用户信息")
+            .setMessage(message)
+            .setPositiveButton("退出登录") { _, _ ->
+                // 清除登录信息
+                prefs.edit().apply {
+                    putBoolean("is_logged_in", false)
+                    remove("username")
+                    remove("user_id")
+                    remove("token")
+                    apply()
+                }
+                Toast.makeText(this, "已退出登录", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("关闭", null)
+            .create()
+        
+        dialog.setOnDismissListener {
+            showBottomControls()
+        }
+        
+        hideBottomControls()
+        dialog.show()
     }
 }

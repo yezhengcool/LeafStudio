@@ -3,6 +3,7 @@
     android:id="@+id/group_name"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:minHeight="44dp"
     android:paddingStart="12dp"
     android:paddingEnd="12dp"
     android:paddingTop="6dp"
