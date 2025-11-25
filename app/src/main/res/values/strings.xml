@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LeafStudio TV Player</string>
+    <string name="browse_title">频道列表</string>
+    <string name="loading">加载中...</string>
+    <string name="error_loading_playlist">加载播放列表失败</string>
+    <string name="error_playing_video">播放视频失败</string>
+    <string name="no_channels">未找到频道</string>
+    <string name="retry">重试</string>
+    <string name="channels">频道</string>
+    <string name="favorites">收藏</string>
+    <string name="settings">设置</string>
+    <string name="search">搜索</string>
+    <string name="playlist_url">播放列表 URL</string>
+    <string name="default_playlist_url">https://yezheng.dpdns.org/tv/ydtv.txt</string>
+    <string name="route_selection_title">选择线路</string>
+    <string name="route_format">线路 %d</string>
+    <string name="switch_route">切换线路</string>
+    <string name="auto_switching_route">当前线路播放失败，正在尝试线路 %d...</string>
+    <string name="all_routes_failed">所有线路均播放失败</string>
+    <string name="current_route">当前线路：%s</string>
+    <string name="channel_list">频道列表</string>
+    <string name="route_list">线路列表</string>
+    <string name="channel_number_hint">频道号：%d</string>
+    <string name="switching_channel">正在切换到频道 %d...</string>
+</resources>
+

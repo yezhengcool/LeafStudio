@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="菜单"
+        android:textColor="@android:color/white"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:paddingBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btn_check_update"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="软件更新"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:background="?attr/selectableItemBackground"
+        android:padding="16dp"
+        android:gravity="start|center_vertical"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#333333"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btn_activation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="激活"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:background="?attr/selectableItemBackground"
+        android:padding="16dp"
+        android:gravity="start|center_vertical"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#333333"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btn_set_city"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="设置城市"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:background="?attr/selectableItemBackground"
+        android:padding="16dp"
+        android:gravity="start|center_vertical"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#333333"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btn_about"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="关于"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:background="?attr/selectableItemBackground"
+        android:padding="16dp"
+        android:gravity="start|center_vertical"/>
+
+</LinearLayout>
