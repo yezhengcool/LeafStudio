@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/dialog_background">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="软件激活"
+        android:textColor="@android:color/white"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="16dp"/>
+
+    <!-- 激活状态显示 -->
+    <LinearLayout
+        android:id="@+id/layout_activation_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#1A4CAF50"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="✓ 已激活"
+            android:textColor="#4CAF50"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tv_expiry_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="过期时间: 2024-12-31 23:59:59"
+            android:textColor="#CCCCCC"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:paddingBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/tv_remaining_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="剩余: 30天12小时30分钟15秒"
+            android:textColor="#4CAF50"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:gravity="center"/>
+
+    </LinearLayout>
+
+    <!-- 未激活提示 -->
+    <LinearLayout
+        android:id="@+id/layout_not_activated"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#1AFF9800"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⚠ 未激活"
+            android:textColor="#FF9800"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tv_trial_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="试用期剩余 3 天"
+            android:textColor="#CCCCCC"
+            android:textSize="12sp"
+            android:gravity="center"/>
+
+    </LinearLayout>
+
+    <!-- 机器码显示 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="设备机器码"
+        android:textColor="#CCCCCC"
+        android:textSize="12sp"
+        android:paddingBottom="4dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#1AFFFFFF"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:id="@+id/tv_machine_code"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="XXXX-XXXX-XXXX-XXXX"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"/>
+
+        <Button
+            android:id="@+id/btn_copy_machine_code"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="复制"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:background="?attr/selectableItemBackground"
+            android:padding="8dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"/>
+
+    </LinearLayout>
+
+    <!-- 提示信息 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="请将机器码发送给管理员\n管理员在后台激活后即可使用"
+        android:textColor="#999999"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:layout_marginBottom="8dp"/>
+
+    <!-- 刷新状态按钮 -->
+    <Button
+        android:id="@+id/btn_refresh_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="刷新激活状态"
+        android:textColor="@android:color/white"
+        android:background="#2196F3"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- 关闭按钮 -->
+    <Button
+        android:id="@+id/btn_cancel_activation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="关闭"
+        android:textColor="#999999"
+        android:background="?attr/selectableItemBackground"
+        android:padding="12dp"/>
+
+</LinearLayout>

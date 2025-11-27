@@ -12,9 +12,14 @@ android {
         applicationId "com.leafstudio.tvplayer"
         minSdk 21
         targetSdk 34
-        versionCode 15
-        versionName "2.1.3"
+        versionCode 19
+        versionName "2.1.7"
         multiDexEnabled true
+        
+        ndk {
+            // 指定支持的 ABI，确保包含 IJKPlayer 的所有架构库
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
     }
 
     signingConfigs {
@@ -28,7 +33,8 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }

@@ -1,3 +1,19 @@
+# 忽略敏感配置文件
+server/config.php
+
+# 忽略 IDE 配置
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 忽略 macOS 文件
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# 忽略 Android 构建文件
 *.iml
 .gradle
 /local.properties
@@ -9,11 +25,14 @@
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
-/app/build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
-.idea
-*.apk
-*.ap_
+
+# 忽略日志文件
+*.log
+
+# 忽略临时文件
+*.tmp
+*.bak

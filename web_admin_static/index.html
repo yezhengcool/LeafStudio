@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>激活系统管理后台</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- 防止未登录时页面闪烁 -->
+    <style>
+        body {
+            visibility: hidden;
+        }
+
+        body.loaded {
+            visibility: visible;
+        }
+    </style>
+
+    <!-- 登录检查 - 必须在页面加载前执行 -->
+    <script>
+        // 立即检查登录状态
+        (function () {
+            const isLoggedIn = localStorage.getItem('admin_logged_in');
+            if (isLoggedIn !== 'true') {
+                // 未登录，立即跳转到登录页
+                window.location.href = 'login.html';
+            } else {
+                // 已登录，显示页面
+                document.addEventListener('DOMContentLoaded', function () {
+                    document.body.classList.add('loaded');
+                });
+            }
+        })();
+    </script>
+</head>
+
+<body>
+    <!-- 调试控制台 -->
+    <div id="debug-console"
+        style="display:none; position:fixed; top:0; left:0; right:0; background:rgba(0,0,0,0.8); color:#0f0; padding:10px; font-family:monospace; font-size:12px; z-index:9999; max-height:200px; overflow:auto;">
+    </div>
+
+    <script>
+        // 调试日志函数
+        function log(msg) {
+            console.log(msg);
+            var consoleDiv = document.getElementById('debug-console');
+            if (consoleDiv) {
+                consoleDiv.style.display = 'block';
+                consoleDiv.innerHTML += '<div>> ' + msg + '</div>';
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            }
+        }
+
+        // 全局错误捕获
+        window.onerror = function (msg, url, line, col, error) {
+            log("❌ 错误: " + msg + "\n📍 " + line + "行");
+            return false;
+        };
+
+        window.addEventListener('unhandledrejection', function (event) {
+            log("⚠️ 异步错误: " + (event.reason ? event.reason.message : event.reason));
+        });
+
+        log('管理后台页面开始加载...');
+    </script>
+
+    <div class="container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>🍃 LeafStudio</h2>
+                <p>激活管理系统</p>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-page="devices">
+                    <span class="icon">📱</span>
+                    <span>设备管理</span>
+                </a>
+                <a href="#" class="nav-item" data-page="codes">
+                    <span class="icon">🎫</span>
+                    <span>激活码管理</span>
+                </a>
+                <a href="#" class="nav-item" data-page="statistics">
+                    <span class="icon">📊</span>
+                    <span>统计分析</span>
+                </a>
+                <a href="#" class="nav-item" data-page="settings">
+                    <span class="icon">⚙️</span>
+                    <span>系统设置</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 头部 -->
+            <header class="header">
+                <div class="header-left">
+                    <h1 id="page-title">设备管理</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span>管理员</span>
+                        <button class="btn-logout" onclick="logout()">退出</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 设备管理页面 -->
+            <div id="devices-page" class="page active">
+                <div class="page-header">
+                    <div class="search-box">
+                        <input type="text" id="device-search" placeholder="搜索机器码或激活码...">
+                        <button onclick="searchDevices()">🔍 搜索</button>
+                    </div>
+                    <div class="filter-box">
+                        <select id="device-filter" onchange="filterDevices()">
+                            <option value="all">全部设备</option>
+                            <option value="active">已激活</option>
+                            <option value="expired">已过期</option>
+                            <option value="expiring">即将过期</option>
+                        </select>
+                        <button onclick="refreshDevices()">🔄 刷新</button>
+                    </div>
+                </div>
+
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">📱</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="total-devices">0</div>
+                            <div class="stat-label">总设备数</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="active-devices">0</div>
+                            <div class="stat-label">已激活</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏰</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="expiring-devices">0</div>
+                            <div class="stat-label">即将过期</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">❌</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="expired-devices">0</div>
+                            <div class="stat-label">已过期</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>机器码</th>
+                                <th>备注</th>
+                                <th>激活码</th>
+                                <th>激活时间</th>
+                                <th>过期时间</th>
+                                <th>剩余天数</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="devices-table-body">
+                            <!-- 数据将通过 JavaScript 动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 激活码管理页面 -->
+            <div id="codes-page" class="page">
+                <div class="page-header">
+                    <button class="btn-primary" onclick="showGenerateCodesDialog()">
+                        ➕ 生成激活码
+                    </button>
+                    <button onclick="refreshCodes()">🔄 刷新</button>
+                </div>
+
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">🎫</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="total-codes">0</div>
+                            <div class="stat-label">总激活码</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="used-codes">0</div>
+                            <div class="stat-label">已使用</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⭕</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="unused-codes">0</div>
+                            <div class="stat-label">未使用</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>激活码</th>
+                                <th>有效天数</th>
+                                <th>状态</th>
+                                <th>使用设备</th>
+                                <th>使用时间</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="codes-table-body">
+                            <!-- 数据将通过 JavaScript 动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 统计分析页面 -->
+            <div id="statistics-page" class="page">
+                <h2>统计分析</h2>
+                <div class="chart-container">
+                    <canvas id="activation-chart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="expiry-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- 系统设置页面 -->
+            <div id="settings-page" class="page">
+                <h2>系统设置</h2>
+
+                <div class="settings-section">
+                    <h3>账户设置</h3>
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label>当前用户名</label>
+                            <input type="text" id="current-username" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>登录时间</label>
+                            <input type="text" id="login-time" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>修改密码</h3>
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label>当前密码</label>
+                            <input type="password" id="current-password" placeholder="请输入当前密码">
+                        </div>
+                        <div class="form-group">
+                            <label>新密码</label>
+                            <input type="password" id="new-password" placeholder="请输入新密码（至少6位）">
+                        </div>
+                        <div class="form-group">
+                            <label>确认新密码</label>
+                            <input type="password" id="confirm-password" placeholder="请再次输入新密码">
+                        </div>
+                        <button class="btn-primary" onclick="changePassword()">修改密码</button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>API 配置</h3>
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label>API 地址</label>
+                            <input type="text" id="api-url" value="https://yezheng.dpdns.org/tv/api">
+                        </div>
+                        <button class="btn-primary" onclick="saveSettings()">保存设置</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 延长激活对话框 -->
+    <div id="extend-dialog" class="dialog-overlay">
+        <div class="dialog">
+            <div class="dialog-header">
+                <h3>延长激活时间</h3>
+                <button class="dialog-close" onclick="closeDialog('extend-dialog')">×</button>
+            </div>
+            <div class="dialog-body">
+                <div class="form-group">
+                    <label>机器码</label>
+                    <input type="text" id="extend-machine-code" readonly>
+                </div>
+                <div class="form-group">
+                    <label>当前过期时间</label>
+                    <input type="text" id="extend-current-expiry" readonly>
+                </div>
+                <div class="form-group">
+                    <label>延长天数</label>
+                    <input type="number" id="extend-days" value="30" min="1">
+                </div>
+                <div class="form-group">
+                    <label>新过期时间</label>
+                    <input type="text" id="extend-new-expiry" readonly>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn-secondary" onclick="closeDialog('extend-dialog')">取消</button>
+                <button class="btn-primary" onclick="confirmExtend()">确认延长</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 生成激活码对话框 -->
+    <div id="generate-dialog" class="dialog-overlay">
+        <div class="dialog">
+            <div class="dialog-header">
+                <h3>生成激活码</h3>
+                <button class="dialog-close" onclick="closeDialog('generate-dialog')">×</button>
+            </div>
+            <div class="dialog-body">
+                <div class="form-group">
+                    <label>生成数量</label>
+                    <input type="number" id="generate-count" value="10" min="1" max="1000">
+                </div>
+                <div class="form-group">
+                    <label>有效天数</label>
+                    <select id="generate-days">
+                        <option value="7">7天（试用）</option>
+                        <option value="30" selected>30天（月卡）</option>
+                        <option value="90">90天（季卡）</option>
+                        <option value="180">180天（半年卡）</option>
+                        <option value="365">365天（年卡）</option>
+                        <option value="1825">1825天（5年）</option>
+                    </select>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn-secondary" onclick="closeDialog('generate-dialog')">取消</button>
+                <button class="btn-primary" onclick="confirmGenerate()">开始生成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设备详情对话框 -->
+    <div id="device-detail-dialog" class="dialog-overlay">
+        <div class="dialog">
+            <div class="dialog-header">
+                <h3>设备详情</h3>
+                <button class="dialog-close" onclick="closeDialog('device-detail-dialog')">×</button>
+            </div>
+            <div class="dialog-body">
+                <div id="device-detail-content"></div>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn-secondary" onclick="closeDialog('device-detail-dialog')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑备注对话框 -->
+    <div id="edit-note-dialog" class="dialog-overlay">
+        <div class="dialog">
+            <div class="dialog-header">
+                <h3>编辑设备备注</h3>
+                <button class="dialog-close" onclick="closeDialog('edit-note-dialog')">×</button>
+            </div>
+            <div class="dialog-body">
+                <div class="form-group">
+                    <label>机器码</label>
+                    <input type="text" id="edit-note-machine-code" readonly>
+                </div>
+                <div class="form-group">
+                    <label>设备备注</label>
+                    <input type="text" id="edit-note-input" placeholder="请输入备注信息，如：张三的设备" maxlength="200">
+                    <small style="color: #9ca3af; margin-top: 0.5rem; display: block;">
+                        最多 200 个字符，用于标识设备所有者或用途
+                    </small>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn-secondary" onclick="closeDialog('edit-note-dialog')">取消</button>
+                <button class="btn-primary" onclick="confirmEditNote()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MD5 库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+    <!-- 添加版本号防止缓存 -->
+    <script type="module" src="script.js?v=20251126"></script>
+</body>
+
+</html>

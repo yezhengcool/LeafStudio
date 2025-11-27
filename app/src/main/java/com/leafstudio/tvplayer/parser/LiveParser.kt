@@ -1,6 +1,7 @@
 package com.leafstudio.tvplayer.parser
 
 import com.leafstudio.tvplayer.model.Channel
+import com.leafstudio.tvplayer.utils.CryptoUtils
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.regex.Pattern
@@ -75,7 +76,7 @@ class LiveParser {
                     for (j in 0 until channelArray.length()) {
                         val channelObj = channelArray.getJSONObject(j)
                         val name = channelObj.optString("name")
-                        val url = channelObj.optString("url")
+                        val url = CryptoUtils.smartDecrypt(channelObj.optString("url"))
                         val logo = channelObj.optString("icon")
                         
                         // Find or create channel
@@ -137,7 +138,7 @@ class LiveParser {
                 if (parts.size > 1) setting.headers(parts[1])
                 
                 currentChannel?.let { ch ->
-                    (ch.urls as MutableList).add(parts[0])
+                    (ch.urls as MutableList).add(CryptoUtils.smartDecrypt(parts[0]))
                     setting.copy(ch).clear()
                 }
             }
@@ -209,7 +210,7 @@ class LiveParser {
                 for (url in urlPart.split("#")) {
                     val parts = url.split("|", limit = 2)
                     if (parts.size > 1) setting.headers(parts[1])
-                    (channel.urls as MutableList).add(parts[0])
+                    (channel.urls as MutableList).add(CryptoUtils.smartDecrypt(parts[0]))
                     setting.copy(channel)
                 }
             }

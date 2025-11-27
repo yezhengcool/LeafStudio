@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - LeafStudio 激活管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+        }
+
+        .login-container {
+            width: 90%;
+            max-width: 420px;
+            background: rgba(26, 31, 53, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(76, 175, 80, 0.2);
+            border-radius: 1.5rem;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #4CAF50, #2196F3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo p {
+            color: #9ca3af;
+            font-size: 0.875rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #9ca3af;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.25rem;
+            color: #4CAF50;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 3rem;
+            background: rgba(10, 14, 26, 0.6);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            border-radius: 0.5rem;
+            color: #ffffff;
+            font-size: 0.9375rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: #6b7280;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1rem;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            color: #f44336;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px);
+            }
+
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #6b7280;
+            font-size: 0.75rem;
+        }
+
+        .loading {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .show-password {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #9ca3af;
+            font-size: 1.25rem;
+            user-select: none;
+        }
+
+        .show-password:hover {
+            color: #4CAF50;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>🍃 LeafStudio</h1>
+            <p>激活管理系统</p>
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+
+        <form id="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label>用户名</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">👤</span>
+                    <input type="text" id="username" placeholder="请输入用户名" autocomplete="username" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>密码</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="password" placeholder="请输入密码" autocomplete="current-password" required>
+                    <span class="show-password" onclick="togglePassword()">🙈</span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-login" id="login-btn">
+                登录
+            </button>
+            <div class="loading" id="loading"></div>
+
+            <div style="text-align: center; margin-top: 1rem; font-size: 0.8rem; color: #6b7280;">
+                <p>忘记密码？请联系系统管理员或直接修改数据库。</p>
+            </div>
+        </form>
+
+        <div class="footer">
+            <p>© 2025 LeafStudio. All rights reserved.</p>
+        </div>
+    </div>
+
+    <!-- 调试控制台 -->
+    <div id="debug-console"
+        style="display:none; position:fixed; top:0; left:0; right:0; background:rgba(0,0,0,0.8); color:#0f0; padding:10px; font-family:monospace; font-size:12px; z-index:9999; max-height:200px; overflow:auto;">
+    </div>
+
+    <script>
+        // 调试日志函数
+        function log(msg) {
+            console.log(msg);
+            var consoleDiv = document.getElementById('debug-console');
+            if (consoleDiv) {
+                consoleDiv.style.display = 'block';
+                consoleDiv.innerHTML += '<div>> ' + msg + '</div>';
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            }
+        }
+
+        // 默认的登录处理函数（在模块加载前使用）
+        window.handleLogin = function (event) {
+            if (event) event.preventDefault();
+            alert('⚠️ 系统正在初始化，请稍等 2-3 秒...\n\n如果长时间无反应，可能是网络无法加载数据库驱动。\n请按 F12 查看控制台错误。');
+            return false;
+        };
+
+        log('页面开始加载...');
+    </script>
+
+    <!-- 错误捕获脚本 -->
+    <script>
+        window.onerror = function (msg, url, line, col, error) {
+            var errorMsg = "❌ 错误: " + msg + "\n📍 位置: 第 " + line + " 行";
+            var div = document.getElementById('debug-console');
+            if (!div) {
+                div = document.createElement("div");
+                div.id = 'debug-console';
+                div.style.cssText = "position:fixed;top:0;left:0;right:0;background:rgba(220, 38, 38, 0.95);color:white;padding:15px;z-index:9999;font-size:14px;font-family:monospace;white-space:pre-wrap;backdrop-filter:blur(5px);border-bottom:1px solid rgba(255,255,255,0.2);";
+                document.body.appendChild(div);
+            }
+            div.innerText = errorMsg;
+            console.error(error);
+            return false;
+        };
+
+        window.addEventListener('unhandledrejection', function (event) {
+            var errorMsg = "⚠️ 异步错误: " + (event.reason ? event.reason.message : event.reason);
+            var div = document.getElementById('debug-console');
+            if (!div) {
+                div = document.createElement("div");
+                div.id = 'debug-console';
+                div.style.cssText = "position:fixed;top:0;left:0;right:0;background:rgba(220, 38, 38, 0.95);color:white;padding:15px;z-index:9999;font-size:14px;font-family:monospace;white-space:pre-wrap;backdrop-filter:blur(5px);border-bottom:1px solid rgba(255,255,255,0.2);";
+                document.body.appendChild(div);
+            }
+            div.innerText = errorMsg;
+        });
+    </script>
+
+    <!-- MD5 库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js" onload="log('MD5 库加载成功')"
+        onerror="log('❌ MD5 库加载失败')"></script>
+
+    <script type="module">
+        log('开始加载数据库驱动...');
+
+        // 尝试从 jsdelivr 加载，它通常更稳定
+        import { neon } from 'https://cdn.jsdelivr.net/npm/@neondatabase/serverless@0.6.0/+esm';
+
+        log('数据库驱动加载成功！');
+
+        // 数据库连接字符串
+        const DATABASE_URL = 'postgresql://neondb_owner:npg_kf5BO3mHDoTZ@ep-sparkling-river-ah52my74-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require';
+
+        // 创建数据库连接
+        let sql;
+        try {
+            sql = neon(DATABASE_URL);
+            log('数据库连接对象创建成功');
+        } catch (e) {
+            log('❌ 初始化数据库连接失败: ' + e.message);
+        }
+
+        // 默认账户信息 (不再需要，因为从数据库加载)
+        // const DEFAULT_USERNAME = 'LeafStudio';
+        // const DEFAULT_PASSWORD = 'Test23456';
+
+        // 检查是否已登录
+        if (localStorage.getItem('admin_logged_in') === 'true') {
+            window.location.href = 'index.html';
+        }
+
+        // 显示错误消息
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 3000);
+        }
+
+        // 切换密码显示
+        window.togglePassword = function () {
+            const passwordInput = document.getElementById('password');
+            const showPasswordBtn = document.querySelector('.show-password');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                showPasswordBtn.textContent = '👁️';
+            } else {
+                passwordInput.type = 'password';
+                showPasswordBtn.textContent = '🙈';
+            }
+        };
+
+        // 覆盖全局登录函数
+        window.handleLogin = async function (event) {
+            if (event) event.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('login-btn');
+            const loading = document.getElementById('loading');
+
+            log('开始登录流程: ' + username);
+
+            loginBtn.style.display = 'none';
+            loading.style.display = 'block';
+
+            try {
+                if (!sql) throw new Error('数据库连接未初始化');
+                if (typeof md5 !== 'function') throw new Error('MD5 库未加载');
+
+                log('正在发送查询请求...');
+                const result = await sql`
+                    SELECT * FROM admin_users 
+                    WHERE username = ${username} 
+                    LIMIT 1
+                `;
+                log('收到数据库响应，记录数: ' + result.length);
+
+                if (result.length === 0) {
+                    throw new Error('用户名不存在');
+                }
+
+                const admin = result[0];
+                const passwordHash = md5(password);
+
+                log('前端计算的哈希: ' + passwordHash);
+                log('数据库存储哈希: ' + admin.password_hash);
+
+                // 不区分大小写进行比较
+                if (passwordHash.toLowerCase() !== admin.password_hash.toLowerCase()) {
+                    throw new Error('密码错误 (哈希不匹配)');
+                }
+
+                // 更新登录时间
+                // 注意：这里不使用 await，让它在后台执行，加快跳转速度
+                sql`UPDATE admin_users SET last_login = NOW() WHERE id = ${admin.id}`.catch(console.error);
+
+                log('验证成功，正在跳转...');
+
+                localStorage.setItem('admin_logged_in', 'true');
+                localStorage.setItem('admin_username', admin.username);
+                localStorage.setItem('admin_user_id', admin.id);
+                localStorage.setItem('login_time', new Date().toISOString());
+
+                window.location.href = 'index.html';
+
+            } catch (error) {
+                log('❌ 登录失败: ' + error.message);
+                console.error('登录失败详情:', error);
+
+                loginBtn.style.display = 'block';
+                loading.style.display = 'none';
+
+                const errorDiv = document.getElementById('error-message');
+                errorDiv.textContent = error.message;
+                errorDiv.classList.add('show');
+                setTimeout(() => errorDiv.classList.remove('show'), 3000);
+            }
+
+            return false;
+        };
+
+        log('系统初始化完成，可以登录了');
+    </script>
+</body>
+
+</html>

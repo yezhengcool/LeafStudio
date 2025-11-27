@@ -1,0 +1,7 @@
+name = "leafstudio-activation"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+account_id = "4b2f335abb564723589182e1576205b6"
+
+[env.production]
+name = "leafstudio-activation"

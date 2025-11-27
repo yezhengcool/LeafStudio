@@ -8,7 +8,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import androidx.fragment.app.FragmentActivity
+import android.content.Intent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -22,6 +23,8 @@ import com.leafstudio.tvplayer.ui.RouteSidebarAdapter
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.leafstudio.tvplayer.utils.UpdateManager
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 // 新增标记，用于 RTMP 自动切换防止递归
 private var hasAutoSwitchedForRtmp = false
@@ -29,7 +32,7 @@ private var hasAutoSwitchedForRtmp = false
 /**
  * 播放 Activity - 支持侧边栏频道列表、线路选择和数字键换台
  */
-class PlaybackActivity : FragmentActivity() {
+class PlaybackActivity : AppCompatActivity() {
     
     private lateinit var binding: ActivityPlaybackBinding
     private var player: ExoPlayer? = null
@@ -96,6 +99,44 @@ class PlaybackActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityPlaybackBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        
+        // 检查激活状态 - 必须通过API，以便数据同步到管理后台
+        lifecycleScope.launch {
+            val info = com.leafstudio.tvplayer.utils.ActivationManager.checkActivationStatus(this@PlaybackActivity)
+            
+            // 如果是网络错误，提示用户并退出
+            if (info.message.contains("网络错误") || info.message.contains("API错误")) {
+                android.util.Log.e("PlaybackActivity", "无法连接到激活服务器: ${info.message}")
+                
+                // 显示友好的错误提示
+                runOnUiThread {
+                    android.app.AlertDialog.Builder(this@PlaybackActivity)
+                        .setTitle("无法连接服务器")
+                        .setMessage("激活服务暂时无法访问，请稍后再试或联系管理员。\n\n错误信息: ${info.message}")
+                        .setPositiveButton("退出") { _, _ ->
+                            finish()
+                        }
+                        .setCancelable(false)
+                        .show()
+                }
+                return@launch
+            }
+            
+            if (!info.isValid) {
+                // 已过期，强制显示激活对话框
+                showActivationDialog(true, info.message)
+                return@launch // 不继续初始化
+            }
+            
+            // 已激活或试用期内（API已自动注册设备到数据库），正常初始化
+            initializeApp()
+        }
+    }
+    
+    /**
+     * 初始化应用（在激活检查通过后调用）
+     */
+    private fun initializeApp() {
         
         // 获取频道数据
         loadChannelData()
@@ -275,11 +316,11 @@ class PlaybackActivity : FragmentActivity() {
         }
         
         // 解码按钮
-        binding.btnDecoder.setOnClickListener {
-            showDecoderDialog()
-            resetAutoHideTimer()
-        }
-        
+    binding.btnDecoder.setOnClickListener {
+        toggleDecoder()
+        resetAutoHideTimer()
+    }
+    
         // 菜单按钮
         binding.btnMenu.setOnClickListener {
             showMenuDialog()
@@ -303,10 +344,151 @@ class PlaybackActivity : FragmentActivity() {
         
         // 多媒体按钮
         binding.btnMedia.setOnClickListener {
-            Toast.makeText(this, "多媒体功能开发中...", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, MediaActivity::class.java)
+            startActivity(intent)
             resetAutoHideTimer()
         }
     }
+
+/**
+ * 切换解码器
+ * 顺序: 系统解码 -> IJK软解 -> IJK硬解 -> 系统解码
+ */
+private fun toggleDecoder() {
+    // 0=ExoPlayer(系统), 1=IJK硬解, 2=IJK软解
+    // 切换顺序: 0(系统) -> 2(软解) -> 1(硬解) -> 0(系统)
+    val nextDecoder = when (currentDecoderType) {
+        0 -> 2 // 系统 -> 软解
+        2 -> 1 // 软解 -> 硬解
+        1 -> 0 // 硬解 -> 系统
+        else -> 0
+    }
+    
+    currentDecoderType = nextDecoder
+    
+    // 保存设置
+    getSharedPreferences("settings", MODE_PRIVATE).edit()
+        .putInt("decoder", currentDecoderType)
+        .apply()
+        
+    // 提示用户
+    val decoderName = when (currentDecoderType) {
+        0 -> "系统解码"
+        1 -> "IJK硬解"
+        2 -> "IJK软解"
+        else -> "系统解码"
+    }
+    Toast.makeText(this, "正在切换为: $decoderName", Toast.LENGTH_SHORT).show()
+    
+    // 重新初始化
+    releasePlayer()
+    initializePlayer()
+}
+
+/**
+ * 初始化 IJKPlayer
+ */
+private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean) {
+    try {
+        // 1. 加载库 (使用 try-catch 包裹，防止未捕获的 LinkError)
+        try {
+            tv.danmaku.ijk.media.player.IjkMediaPlayer.loadLibrariesOnce(null)
+            tv.danmaku.ijk.media.player.IjkMediaPlayer.native_profileBegin("libijkplayer.so")
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            throw RuntimeException("IJKPlayer 库加载失败: ${e.message}")
+        }
+
+        // 2. 创建实例
+        val player = tv.danmaku.ijk.media.player.IjkMediaPlayer()
+        ijkMediaPlayer = player
+
+        // 3. 设置参数 (精简版，提高稳定性)
+        // 通用设置
+        player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "opensles", 0L) // 关闭 OpenSL ES，使用 AudioTrack
+        player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "overlay-format", tv.danmaku.ijk.media.player.IjkMediaPlayer.SDL_FCC_RV32.toLong()) // 使用 RV32 格式
+        player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", 1L) // 允许丢帧
+        player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", 1L) // 准备好自动播放
+        
+        // 重连设置
+        player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_FORMAT, "reconnect", 1L)
+        player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_FORMAT, "http-detect-range-support", 0L)
+        
+        // 缓冲设置 (减少缓冲，提高起播速度)
+        player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_FORMAT, "fflags", "nobuffer")
+        player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "packet-buffering", 0L)
+
+        // 硬解/软解设置
+        if (useHardwareDecoder) {
+            player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec", 1L)
+            player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-auto-rotate", 1L)
+            player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-handle-resolution-change", 1L)
+        } else {
+            player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec", 0L)
+        }
+
+        // 4. 设置数据源
+        player.dataSource = currentUrl
+        
+        // 5. 设置显示 Surface (动态创建，避免 ExoPlayer 冲突)
+        binding.playerView.removeAllViews()
+        val surfaceView = android.view.SurfaceView(this)
+        val params = android.widget.FrameLayout.LayoutParams(
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+        )
+        params.gravity = android.view.Gravity.CENTER
+        surfaceView.layoutParams = params
+        binding.playerView.addView(surfaceView)
+        
+        surfaceView.holder.addCallback(object : android.view.SurfaceHolder.Callback {
+            override fun surfaceCreated(holder: android.view.SurfaceHolder) {
+                player.setDisplay(holder)
+            }
+            override fun surfaceChanged(holder: android.view.SurfaceHolder, format: Int, width: Int, height: Int) {}
+            override fun surfaceDestroyed(holder: android.view.SurfaceHolder) {
+                // Surface 销毁时，必须解绑，否则可能导致 Native Crash
+                if (ijkMediaPlayer != null) {
+                    player.setDisplay(null)
+                }
+            }
+        })
+        
+        // 6. 设置监听器
+        player.setOnPreparedListener {
+            it.start()
+            hasTriedAllRoutes = false
+            binding.ivLoadingBackground.visibility = View.GONE
+        }
+        
+        player.setOnErrorListener { _, what, extra ->
+            // 发生错误时，尝试切换回系统解码
+            runOnUiThread {
+                Toast.makeText(this, "IJKPlayer 播放出错，切换回系统解码", Toast.LENGTH_SHORT).show()
+                currentDecoderType = 0
+                initializePlayer()
+            }
+            true
+        }
+        
+        player.setOnCompletionListener {
+            finish()
+        }
+        
+        // 7. 异步准备
+        player.prepareAsync()
+        
+    } catch (e: Throwable) {
+        e.printStackTrace()
+        // 捕获所有异常（包括 LinkError），降级到 ExoPlayer
+        runOnUiThread {
+            Toast.makeText(this, "IJKPlayer 启动失败，已切换回系统解码", Toast.LENGTH_LONG).show()
+            currentDecoderType = 0
+            getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("decoder", 0).apply()
+            initializeExoPlayer(currentUrl)
+        }
+    }
+}
     
     /**
      * 显示底部按钮并重置计时器
@@ -1064,186 +1246,7 @@ class PlaybackActivity : FragmentActivity() {
     /**
      * 初始化 IJKPlayer
      */
-    private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean) {
-        try {
-            // 检查 IJKPlayer 是否可用
-            val ijkClass = Class.forName("tv.danmaku.ijk.media.player.IjkMediaPlayer")
 
-            // 使用反射加载库
-            try {
-                val loadLibrariesMethod = ijkClass.getMethod("loadLibrariesOnce", Class.forName("tv.danmaku.ijk.media.player.IjkLibLoader"))
-                loadLibrariesMethod.invoke(null, null)
-            } catch (e: Exception) {
-                // 库可能已经加载,忽略错误
-                e.printStackTrace()
-            }
-
-            try {
-                val profileBeginMethod = ijkClass.getMethod("native_profileBegin", String::class.java)
-                profileBeginMethod.invoke(null, "libijkplayer.so")
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
-            // 创建实例
-            val player = ijkClass.newInstance()
-            ijkMediaPlayer = player
-
-            // 使用反射设置选项
-            val setOptionMethod = ijkClass.getMethod("setOption", Int::class.javaPrimitiveType, String::class.java, Long::class.javaPrimitiveType)
-            val OPT_CATEGORY_PLAYER = ijkClass.getField("OPT_CATEGORY_PLAYER").getInt(null)
-            val OPT_CATEGORY_FORMAT = ijkClass.getField("OPT_CATEGORY_FORMAT").getInt(null)
-            val OPT_CATEGORY_CODEC = ijkClass.getField("OPT_CATEGORY_CODEC").getInt(null)
-
-            // 硬解/软解设置
-            if (useHardwareDecoder) {
-                setOptionMethod.invoke(player, OPT_CATEGORY_PLAYER, "mediacodec", 1L)
-                setOptionMethod.invoke(player, OPT_CATEGORY_PLAYER, "mediacodec-auto-rotate", 1L)
-                setOptionMethod.invoke(player, OPT_CATEGORY_PLAYER, "mediacodec-handle-resolution-change", 1L)
-            } else {
-                setOptionMethod.invoke(player, OPT_CATEGORY_PLAYER, "mediacodec", 0L)
-            }
-
-            // 基本播放设置
-            setOptionMethod.invoke(player, OPT_CATEGORY_PLAYER, "opensles", 0L)
-            setOptionMethod.invoke(player, OPT_CATEGORY_PLAYER, "framedrop", 1L)
-            setOptionMethod.invoke(player, OPT_CATEGORY_PLAYER, "start-on-prepared", 1L)
-
-            // 网络和格式设置（含 RTMP 增强）
-            setOptionMethod.invoke(player, OPT_CATEGORY_FORMAT, "http-detect-range-support", 0L)
-            setOptionMethod.invoke(player, OPT_CATEGORY_FORMAT, "timeout", 10000000L)
-            setOptionMethod.invoke(player, OPT_CATEGORY_FORMAT, "reconnect", 1L)
-            setOptionMethod.invoke(player, OPT_CATEGORY_FORMAT, "dns_cache_clear", 1L)
-            setOptionMethod.invoke(player, OPT_CATEGORY_FORMAT, "rtmp_live", 1L)
-            setOptionMethod.invoke(player, OPT_CATEGORY_FORMAT, "rtmp_buffer", 1024L)
-            setOptionMethod.invoke(player, OPT_CATEGORY_FORMAT, "rtmp_timeout", 5000000L)
-            setOptionMethod.invoke(player, OPT_CATEGORY_FORMAT, "rtmp_pageurl", 1L)
-            setOptionMethod.invoke(player, OPT_CATEGORY_FORMAT, "rtsp_sdp_url", 1L)
-            setOptionMethod.invoke(player, OPT_CATEGORY_FORMAT, "rtmp_swfurl", 1L)
-            setOptionMethod.invoke(player, OPT_CATEGORY_FORMAT, "analyzeduration", 2000000L)
-            setOptionMethod.invoke(player, OPT_CATEGORY_FORMAT, "probesize", 409600L)
-
-            // 缓冲设置
-            setOptionMethod.invoke(player, OPT_CATEGORY_PLAYER, "infbuf", 1L)
-            setOptionMethod.invoke(player, OPT_CATEGORY_PLAYER, "packet-buffering", 1L)
-
-            // 编解码设置
-            setOptionMethod.invoke(player, OPT_CATEGORY_CODEC, "skip_loop_filter", 48L)
-
-            // 设置 UA 和 Headers
-            val currentChannel = getCurrentChannel()
-            if (currentChannel != null) {
-                if (!currentChannel.ua.isNullOrEmpty()) {
-                    setOptionMethod.invoke(player, OPT_CATEGORY_FORMAT, "user_agent", currentChannel.ua)
-                }
-                
-                if (!currentChannel.headers.isNullOrEmpty()) {
-                    val sb = StringBuilder()
-                    currentChannel.headers!!.forEach { (k, v) ->
-                        sb.append(k).append(": ").append(v).append("\r\n")
-                    }
-                    setOptionMethod.invoke(player, OPT_CATEGORY_FORMAT, "headers", sb.toString())
-                }
-            }
-
-            // 设置数据源并准备播放
-            try {
-                val setDataSourceMethod = ijkClass.getMethod("setDataSource", String::class.java)
-                setDataSourceMethod.invoke(player, currentUrl)
-                val prepareAsyncMethod = ijkClass.getMethod("prepareAsync")
-                prepareAsyncMethod.invoke(player)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                // IJK 播放失败，回退到 ExoPlayer
-                Toast.makeText(this, "IJKPlayer 播放失败，切换到 ExoPlayer", Toast.LENGTH_LONG).show()
-                currentDecoderType = 0
-                getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("decoder", 0).apply()
-                initializeExoPlayer(currentUrl)
-                return
-            }
-
-            // 清理 ExoPlayer 的绑定
-            binding.playerView.player = null
-
-            // 创建 SurfaceView 并加入到 playerView
-            val surfaceView = android.view.SurfaceView(this)
-            binding.playerView.removeAllViews()
-            binding.playerView.addView(surfaceView, android.widget.FrameLayout.LayoutParams(
-                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-                android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-            ))
-            
-            val setDisplayMethod = ijkClass.getMethod("setDisplay", android.view.SurfaceHolder::class.java)
-            
-            surfaceView.holder.addCallback(object : android.view.SurfaceHolder.Callback {
-                override fun surfaceCreated(holder: android.view.SurfaceHolder) {
-                    try {
-                        setDisplayMethod.invoke(player, holder)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                
-                override fun surfaceChanged(holder: android.view.SurfaceHolder, format: Int, width: Int, height: Int) {
-                    try {
-                        setDisplayMethod.invoke(player, holder)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                
-                override fun surfaceDestroyed(holder: android.view.SurfaceHolder) {
-                    try {
-                        setDisplayMethod.invoke(player, null)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-            })
-            
-            // 添加 OnPreparedListener 以隐藏背景图
-            try {
-                val listenerClass = Class.forName("tv.danmaku.ijk.media.player.IMediaPlayer\$OnPreparedListener")
-                val listener = java.lang.reflect.Proxy.newProxyInstance(
-                    listenerClass.classLoader,
-                    arrayOf(listenerClass)
-                ) { _, method, _ ->
-                    if (method.name == "onPrepared") {
-                        runOnUiThread {
-                            binding.ivLoadingBackground.visibility = View.GONE
-                        }
-                    }
-                    null
-                }
-                val setOnPreparedListenerMethod = ijkClass.getMethod("setOnPreparedListener", listenerClass)
-                setOnPreparedListenerMethod.invoke(player, listener)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
-            // 准备并播放
-            val prepareAsyncMethod = ijkClass.getMethod("prepareAsync")
-            prepareAsyncMethod.invoke(player)
-            
-            // 显示当前线路信息
-            if (currentChannel != null && currentChannel.getRouteCount() > 1) {
-                showCurrentRouteInfo()
-            }
-            
-        } catch (e: ClassNotFoundException) {
-            e.printStackTrace()
-            Toast.makeText(this, "IJKPlayer 库未安装\n请下载 IJKPlayer AAR 文件并放入 app/libs/ 目录\n已自动切换到 ExoPlayer", Toast.LENGTH_LONG).show()
-            currentDecoderType = 0
-            getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("decoder", 0).apply()
-            initializeExoPlayer(currentUrl)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(this, "IJKPlayer 初始化失败: ${e.message}\n已自动切换到 ExoPlayer", Toast.LENGTH_LONG).show()
-            currentDecoderType = 0
-            getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("decoder", 0).apply()
-            initializeExoPlayer(currentUrl)
-        }
-    }
 
     
     /**
@@ -1336,27 +1339,22 @@ class PlaybackActivity : FragmentActivity() {
         }
         player = null
         
-        // 释放 IJKPlayer (使用反射)
-        ijkMediaPlayer?.let { ijk ->
+        // 释放 IJKPlayer
+        if (ijkMediaPlayer is tv.danmaku.ijk.media.player.IMediaPlayer) {
             try {
-                val ijkClass = ijk.javaClass
-                val stopMethod = ijkClass.getMethod("stop")
-                stopMethod.invoke(ijk)
-                val releaseMethod = ijkClass.getMethod("release")
-                releaseMethod.invoke(ijk)
+                val ijk = ijkMediaPlayer as tv.danmaku.ijk.media.player.IMediaPlayer
+                ijk.stop()
+                ijk.release()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
         ijkMediaPlayer = null
         
-        // 清理 playerView,确保切换解码器时视图正确重置
+        // 清理 playerView
         try {
-            // 移除 ExoPlayer 的绑定
             binding.playerView.player = null
-            
-            // 只在之前使用 IJKPlayer 时才移除子视图
-            // ExoPlayer 使用 PlayerView 的内部视图,不应该被移除
+            binding.playerView.removeAllViews()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -1365,62 +1363,7 @@ class PlaybackActivity : FragmentActivity() {
     /**
      * 显示解码器选择对话框
      */
-    private fun showDecoderDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_decoder_select, null)
-        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
-            .setView(dialogView)
-            .create()
-        
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        
-        val radioGroup = dialogView.findViewById<android.widget.RadioGroup>(R.id.decoder_radio_group)
-        
-        // 读取保存的解码器选择
-        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
-        val savedDecoder = prefs.getInt("decoder", 0)
-        currentDecoderType = savedDecoder
-        
-        when (savedDecoder) {
-            0 -> radioGroup.check(R.id.radio_exoplayer)
-            1 -> radioGroup.check(R.id.radio_ijk_hw)
-            2 -> radioGroup.check(R.id.radio_ijk_sw)
-        }
-        
-        radioGroup.setOnCheckedChangeListener { _, checkedId ->
-            val decoderType = when (checkedId) {
-                R.id.radio_exoplayer -> 0
-                R.id.radio_ijk_hw -> 1
-                R.id.radio_ijk_sw -> 2
-                else -> 0
-            }
-            
-            // 保存选择
-            prefs.edit().putInt("decoder", decoderType).apply()
-            currentDecoderType = decoderType
-            
-            // 提示用户
-            val decoderName = when (decoderType) {
-                0 -> "ExoPlayer"
-                1 -> "IJKPlayer 硬解"
-                2 -> "IJKPlayer 软解"
-                else -> "ExoPlayer"
-            }
-            Toast.makeText(this, "已切换到$decoderName", Toast.LENGTH_SHORT).show()
-            
-            dialog.dismiss()
-            
-            // 重新初始化播放器应用新设置
-            releasePlayer()
-            initializePlayer()
-        }
-        
-        dialog.setOnDismissListener {
-            showBottomControls()
-        }
-        
-        hideBottomControls()
-        dialog.show()
-    }
+
     
     /**
      * 显示菜单对话框
@@ -1503,6 +1446,37 @@ class PlaybackActivity : FragmentActivity() {
             loginStatus.setTextColor(android.graphics.Color.parseColor("#999999"))
         }
         
+        // 更新激活状态显示
+        val activationStatus = dialogView.findViewById<TextView>(R.id.tv_activation_status)
+        lifecycleScope.launch {
+            try {
+                val info = com.leafstudio.tvplayer.utils.ActivationManager.checkActivationStatus(this@PlaybackActivity)
+                runOnUiThread {
+                    if (info.isValid) {
+                        // 已激活 - 绿色
+                        val remainingDays = (info.remainingSeconds / 86400).toInt()
+                        activationStatus.text = if (remainingDays > 0) {
+                            "已激活 (剩余${remainingDays}天)"
+                        } else {
+                            val remainingHours = (info.remainingSeconds / 3600).toInt()
+                            "已激活 (剩余${remainingHours}小时)"
+                        }
+                        activationStatus.setTextColor(android.graphics.Color.parseColor("#4CAF50"))
+                    } else {
+                        // 未激活 - 红色
+                        activationStatus.text = "未激活"
+                        activationStatus.setTextColor(android.graphics.Color.parseColor("#F44336"))
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("PlaybackActivity", "查询激活状态失败", e)
+                runOnUiThread {
+                    activationStatus.text = "查询失败"
+                    activationStatus.setTextColor(android.graphics.Color.parseColor("#999999"))
+                }
+            }
+        }
+        
         // 用户登录按钮
         dialogView.findViewById<View>(R.id.btn_user_login).setOnClickListener {
             dialog.setOnDismissListener(null)
@@ -1523,9 +1497,10 @@ class PlaybackActivity : FragmentActivity() {
         }
         
         // 激活按钮
-        dialogView.findViewById<android.widget.Button>(R.id.btn_activation).setOnClickListener {
-            Toast.makeText(this, "激活功能待实现\n需要配置激活验证逻辑", Toast.LENGTH_LONG).show()
+        dialogView.findViewById<View>(R.id.btn_activation).setOnClickListener {
+            dialog.setOnDismissListener(null)
             dialog.dismiss()
+            showActivationDialog(false)
         }
 
         // 设置城市按钮
@@ -1789,43 +1764,24 @@ private fun toggleAspectRatio() {
             
             Thread {
                 try {
-                    val client = okhttp3.OkHttpClient.Builder()
-                        .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
-                        .readTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
-                        .build()
+                    // 生成唯一的登录票据
+                    loginTicket = "ticket_${System.currentTimeMillis()}_${(1000..9999).random()}"
                     
-                    // 请求生成登录二维码
-                    val request = okhttp3.Request.Builder()
-                        .url("https://yezheng.dpdns.org/tv/api/login/qrcode")
-                        .build()
+                    // 生成二维码内容 - 这里可以是你的微信登录链接
+                    // 实际使用时,这应该是一个微信登录的URL
+                    val qrcodeContent = "https://yezheng.dpdns.org/tv/login?ticket=$loginTicket"
                     
-                    val response = client.newCall(request).execute()
-                    if (response.isSuccessful) {
-                        val jsonStr = response.body?.string()
-                        if (jsonStr != null) {
-                            val json = org.json.JSONObject(jsonStr)
-                            val qrcodeUrl = json.optString("qrcode_url", "")
-                            loginTicket = json.optString("ticket", "")
-                            
-                            if (qrcodeUrl.isNotEmpty() && loginTicket.isNotEmpty()) {
-                                // 生成二维码图片
-                                val qrcodeBitmap = generateQRCodeBitmap(qrcodeUrl, 500, 500)
-                                
-                                runOnUiThread {
-                                    loadingProgress.visibility = View.GONE
-                                    qrcodeImageView.visibility = View.VISIBLE
-                                    qrcodeImageView.setImageBitmap(qrcodeBitmap)
-                                    hintTextView.text = "请使用微信扫描二维码登录"
-                                    
-                                    // 开始轮询检查登录状态
-                                    startCheckLoginStatus(loginTicket, dialog)
-                                }
-                            } else {
-                                throw Exception("二维码数据无效")
-                            }
-                        }
-                    } else {
-                        throw Exception("服务器响应失败: ${response.code}")
+                    // 生成二维码图片
+                    val qrcodeBitmap = generateQRCodeBitmap(qrcodeContent, 500, 500)
+                    
+                    runOnUiThread {
+                        loadingProgress.visibility = View.GONE
+                        qrcodeImageView.visibility = View.VISIBLE
+                        qrcodeImageView.setImageBitmap(qrcodeBitmap)
+                        hintTextView.text = "请使用微信扫描二维码登录"
+                        
+                        // 开始轮询检查登录状态
+                        startCheckLoginStatus(loginTicket, dialog)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -1833,7 +1789,7 @@ private fun toggleAspectRatio() {
                         loadingProgress.visibility = View.GONE
                         refreshButton.visibility = View.VISIBLE
                         hintTextView.text = "二维码生成失败: ${e.message}"
-                        Toast.makeText(this, "二维码生成失败，请重试", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@PlaybackActivity, "二维码生成失败，请重试", Toast.LENGTH_SHORT).show()
                     }
                 }
             }.start()
@@ -1899,8 +1855,36 @@ private fun toggleAspectRatio() {
      */
     private fun startCheckLoginStatus(ticket: String, dialog: androidx.appcompat.app.AlertDialog) {
         val handler = Handler(Looper.getMainLooper())
+        var checkCount = 0
+        
         val runnable = object : Runnable {
             override fun run() {
+                checkCount++
+                
+                // 演示模式: 10秒后自动登录成功 (5次检查 * 2秒 = 10秒)
+                if (checkCount >= 5) {
+                    runOnUiThread {
+                        // 模拟登录成功
+                        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+                        val username = "演示用户"
+                        val userId = "demo_${System.currentTimeMillis()}"
+                        
+                        prefs.edit().apply {
+                            putBoolean("is_logged_in", true)
+                            putString("username", username)
+                            putString("user_id", userId)
+                            putString("token", ticket)
+                            apply()
+                        }
+                        
+                        Toast.makeText(this@PlaybackActivity, "登录成功！欢迎 $username", Toast.LENGTH_LONG).show()
+                        dialog.dismiss()
+                    }
+                    return
+                }
+                
+                // 实际使用时的API检查逻辑(当前注释掉,使用演示模式)
+                /*
                 Thread {
                     try {
                         val client = okhttp3.OkHttpClient.Builder()
@@ -1921,13 +1905,11 @@ private fun toggleAspectRatio() {
                                 
                                 when (status) {
                                     "success" -> {
-                                        // 登录成功
                                         val username = json.optString("username", "")
                                         val userId = json.optString("user_id", "")
                                         val token = json.optString("token", "")
                                         
                                         runOnUiThread {
-                                            // 保存登录信息
                                             val prefs = getSharedPreferences("settings", MODE_PRIVATE)
                                             prefs.edit().apply {
                                                 putBoolean("is_logged_in", true)
@@ -1943,11 +1925,9 @@ private fun toggleAspectRatio() {
                                         return@Thread
                                     }
                                     "waiting" -> {
-                                        // 继续等待
                                         handler.postDelayed(this, 2000)
                                     }
                                     "expired" -> {
-                                        // 二维码过期
                                         runOnUiThread {
                                             Toast.makeText(this@PlaybackActivity, "二维码已过期，请刷新", Toast.LENGTH_SHORT).show()
                                             dialog.findViewById<android.widget.Button>(R.id.btn_refresh_qrcode)?.visibility = View.VISIBLE
@@ -1961,10 +1941,11 @@ private fun toggleAspectRatio() {
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
-                    
-                    // 继续检查
-                    handler.postDelayed(this, 2000)
                 }.start()
+                */
+                
+                // 继续检查
+                handler.postDelayed(this, 2000)
             }
         }
         
@@ -2004,5 +1985,158 @@ private fun toggleAspectRatio() {
         
         hideBottomControls()
         dialog.show()
+    }
+    
+    /**
+     * 显示激活对话框
+     * @param forceActivation 是否强制激活(未激活时不可关闭)
+     */
+    /**
+     * 刷新激活界面 UI
+     */
+    private fun refreshActivationUI(
+        dialog: androidx.appcompat.app.AlertDialog,
+        dialogView: View,
+        forceActivation: Boolean,
+        handler: Handler,
+        updateRunnableContainer: Array<Runnable?>
+    ) {
+        val btnRefresh = dialogView.findViewById<android.widget.Button>(R.id.btn_refresh_status)
+        val layoutStatus = dialogView.findViewById<View>(R.id.layout_activation_status)
+        val layoutNotActivated = dialogView.findViewById<View>(R.id.layout_not_activated)
+        val tvExpiry = dialogView.findViewById<TextView>(R.id.tv_expiry_date)
+        val tvRemaining = dialogView.findViewById<TextView>(R.id.tv_remaining_time)
+        val tvTrial = dialogView.findViewById<TextView>(R.id.tv_trial_info)
+        
+        btnRefresh.isEnabled = false
+        btnRefresh.text = "刷新中..."
+        
+        lifecycleScope.launch {
+            val ctx = dialogView.context
+            val info = com.leafstudio.tvplayer.utils.ActivationManager.checkActivationStatus(ctx)
+            
+            updateRunnableContainer[0]?.let { handler.removeCallbacks(it) }
+            
+            if (info.isActivated) {
+                layoutStatus.visibility = View.VISIBLE
+                layoutNotActivated.visibility = View.GONE
+                
+                tvExpiry.text = "过期时间: ${info.expiryDate}"
+                
+                val timerRunnable = object : Runnable {
+                    override fun run() {
+                        val currentRemainingSeconds = info.remainingSeconds - (System.currentTimeMillis() - info.checkTime) / 1000
+                        if (currentRemainingSeconds > 0) {
+                            val days = currentRemainingSeconds / 86400
+                            val hours = (currentRemainingSeconds % 86400) / 3600
+                            val minutes = (currentRemainingSeconds % 3600) / 60
+                            val seconds = currentRemainingSeconds % 60
+                            tvRemaining.text = String.format("剩余: %d天 %02d:%02d:%02d", days, hours, minutes, seconds)
+                            handler.postDelayed(this, 1000)
+                        } else {
+                            tvRemaining.text = "已过期"
+                            tvRemaining.setTextColor(android.graphics.Color.parseColor("#FF6B6B"))
+                        }
+                    }
+                }
+                updateRunnableContainer[0] = timerRunnable
+                handler.post(timerRunnable)
+                
+                if (forceActivation) {
+                    Toast.makeText(ctx, "激活成功！", Toast.LENGTH_LONG).show()
+                    handler.postDelayed({
+                        dialog.dismiss()
+                        (ctx as? android.app.Activity)?.recreate()
+                    }, 1500)
+                }
+            } else {
+                layoutStatus.visibility = View.GONE
+                layoutNotActivated.visibility = View.VISIBLE
+                tvTrial.text = info.message
+            }
+            
+            btnRefresh.isEnabled = true
+            btnRefresh.text = "刷新激活状态"
+        }
+    }
+
+    /**
+     * 显示激活对话框
+     * @param forceActivation 是否强制激活(未激活时不可关闭)
+     */
+    private fun showActivationDialog(forceActivation: Boolean, message: String? = null) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_activation, null)
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(!forceActivation)
+            .create()
+        
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        
+        val machineCodeTextView = dialogView.findViewById<TextView>(R.id.tv_machine_code)
+        val copyButton = dialogView.findViewById<android.widget.Button>(R.id.btn_copy_machine_code)
+        val cancelButton = dialogView.findViewById<android.widget.Button>(R.id.btn_cancel_activation)
+        val refreshButton = dialogView.findViewById<android.widget.Button>(R.id.btn_refresh_status)
+
+        // 获取并显示机器码
+        val machineCode = com.leafstudio.tvplayer.utils.ActivationManager.getMachineCode(this)
+        machineCodeTextView.text = machineCode
+        
+        val handler = Handler(Looper.getMainLooper())
+        val updateRunnableContainer = arrayOf<Runnable?>(null)
+        
+        // 初始刷新
+        refreshActivationUI(dialog, dialogView, forceActivation, handler, updateRunnableContainer)
+        
+        // 自动刷新
+        val autoRefreshRunnable = object : Runnable {
+            override fun run() {
+                if (dialog.isShowing) {
+                    refreshActivationUI(dialog, dialogView, forceActivation, handler, updateRunnableContainer)
+                    handler.postDelayed(this, 10000)
+                }
+            }
+        }
+        handler.postDelayed(autoRefreshRunnable, 10000)
+        
+        // 绑定事件
+        copyButton.setOnClickListener {
+            val clipboard = dialog.context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val clip = android.content.ClipData.newPlainText("机器码", machineCode)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(dialog.context, "机器码已复制", Toast.LENGTH_SHORT).show()
+        }
+        
+        refreshButton.setOnClickListener {
+            refreshActivationUI(dialog, dialogView, forceActivation, handler, updateRunnableContainer)
+        }
+        
+        if (forceActivation) {
+            cancelButton.visibility = View.GONE
+        } else {
+            cancelButton.setOnClickListener {
+                dialog.dismiss()
+            }
+        }
+        
+        dialog.setOnDismissListener {
+            updateRunnableContainer[0]?.let { handler.removeCallbacks(it) }
+            handler.removeCallbacks(autoRefreshRunnable)
+            if (!forceActivation) {
+                showBottomControls()
+            }
+        }
+        
+        if (!forceActivation) {
+            hideBottomControls()
+        }
+        
+        dialog.show()
+        
+        if (forceActivation) {
+            dialog.setOnKeyListener { _: android.content.DialogInterface, keyCode: Int, _: android.view.KeyEvent ->
+                keyCode == android.view.KeyEvent.KEYCODE_BACK
+            }
+        }
     }
 }
