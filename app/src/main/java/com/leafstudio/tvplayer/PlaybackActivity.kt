@@ -357,29 +357,50 @@ class PlaybackActivity : AppCompatActivity() {
 private fun toggleDecoder() {
     // 0=ExoPlayer(系统), 1=IJK硬解, 2=IJK软解
     // 切换顺序: 0(系统) -> 2(软解) -> 1(硬解) -> 0(系统)
-    val nextDecoder = when (currentDecoderType) {
+    var nextDecoder = when (currentDecoderType) {
         0 -> 2 // 系统 -> 软解
         2 -> 1 // 软解 -> 硬解
         1 -> 0 // 硬解 -> 系统
         else -> 0
     }
-    
+
+    // 增强的IJKPlayer可用性检查
+    if (nextDecoder != 0) {
+        if (!isIJKPlayerAvailable()) {
+            Toast.makeText(this, "IJKPlayer库不可用，继续使用系统解码器", Toast.LENGTH_LONG).show()
+            currentDecoderType = 0
+            // 保存设置并直接返回（不需要重新初始化，因为已经是系统解码）
+            getSharedPreferences("settings", MODE_PRIVATE).edit()
+                .putInt("decoder", currentDecoderType)
+                .apply()
+            return
+        } else {
+            // IJKPlayer可用，但也要提醒用户可能存在兼容性
+            android.util.Log.i("PlaybackActivity", "IJKPlayer库检查通过，尝试切换到${if (nextDecoder == 1) "硬解" else "软解"}")
+        }
+    }
+
     currentDecoderType = nextDecoder
-    
+
     // 保存设置
     getSharedPreferences("settings", MODE_PRIVATE).edit()
         .putInt("decoder", currentDecoderType)
         .apply()
-        
-    // 提示用户
+
+    // 提示用户当前切换
     val decoderName = when (currentDecoderType) {
-        0 -> "系统解码"
+        0 -> "系统解码(ExoPlayer)"
         1 -> "IJK硬解"
         2 -> "IJK软解"
         else -> "系统解码"
     }
-    Toast.makeText(this, "正在切换为: $decoderName", Toast.LENGTH_SHORT).show()
-    
+
+    if (currentDecoderType == 0) {
+        Toast.makeText(this, "已切换为: $decoderName", Toast.LENGTH_SHORT).show()
+    } else {
+        Toast.makeText(this, "正在切换为: $decoderName...", Toast.LENGTH_SHORT).show()
+    }
+
     // 重新初始化
     releasePlayer()
     initializePlayer()
@@ -388,16 +409,60 @@ private fun toggleDecoder() {
 /**
  * 初始化 IJKPlayer
  */
+/**
+ * 检查IJKPlayer是否可用
+ * 增强版本：不仅检查库加载，还检查解码兼容性
+ */
+private fun isIJKPlayerAvailable(): Boolean {
+    return try {
+        // 1. 尝试加载IJKPlayer库
+        tv.danmaku.ijk.media.player.IjkMediaPlayer.loadLibrariesOnce(null)
+        tv.danmaku.ijk.media.player.IjkMediaPlayer.native_profileBegin("libijkplayer.so")
+
+        // 2. 创建测试实例并配置选项
+        val testPlayer = tv.danmaku.ijk.media.player.IjkMediaPlayer()
+
+        // 3. 设置兼容性选项
+        testPlayer.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "opensles", "0")
+        testPlayer.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", "1")
+        testPlayer.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", "1")
+
+        // 4. 检查关键解码器支持
+        testPlayer.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_FORMAT, "fflags", "nobuffer")
+        testPlayer.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_CODEC, "skip_loop_filter", "48")
+
+        // 5. 释放测试实例
+        testPlayer.release()
+
+        android.util.Log.i("PlaybackActivity", "IJKPlayer库检查通过，支持主流解码格式")
+        true
+    } catch (e: UnsatisfiedLinkError) {
+        android.util.Log.e("PlaybackActivity", "IJKPlayer本地库缺失: ${e.message}")
+        false
+    } catch (e: ClassNotFoundException) {
+        android.util.Log.e("PlaybackActivity", "IJKPlayer类未找到: ${e.message}")
+        false
+    } catch (e: NoClassDefFoundError) {
+        android.util.Log.e("PlaybackActivity", "IJKPlayer类定义错误: ${e.message}")
+        false
+    } catch (e: Throwable) {
+        android.util.Log.e("PlaybackActivity", "IJKPlayer不可用: ${e.message}")
+        false
+    }
+}
+
 private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean) {
-    try {
-        // 1. 加载库 (使用 try-catch 包裹，防止未捕获的 LinkError)
-        try {
-            tv.danmaku.ijk.media.player.IjkMediaPlayer.loadLibrariesOnce(null)
-            tv.danmaku.ijk.media.player.IjkMediaPlayer.native_profileBegin("libijkplayer.so")
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            throw RuntimeException("IJKPlayer 库加载失败: ${e.message}")
+    // 预检查IJKPlayer是否可用
+    if (!isIJKPlayerAvailable()) {
+        runOnUiThread {
+            Toast.makeText(this, "IJKPlayer库不可用，自动切换到系统解码器", Toast.LENGTH_LONG).show()
+            currentDecoderType = 0
+            initializeExoPlayer(currentUrl)
         }
+        return
+    }
+
+    try {
 
         // 2. 创建实例
         val player = tv.danmaku.ijk.media.player.IjkMediaPlayer()
@@ -462,10 +527,27 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         }
         
         player.setOnErrorListener { _, what, extra ->
-            // 发生错误时，尝试切换回系统解码
+            // 发生错误时，记录详细错误信息并尝试切换回系统解码
+            val errorMessage = when (what) {
+                tv.danmaku.ijk.media.player.IjkMediaPlayer.MEDIA_ERROR_UNKNOWN -> "未知错误"
+                tv.danmaku.ijk.media.player.IjkMediaPlayer.MEDIA_ERROR_SERVER_DIED -> "服务器断开连接"
+                tv.danmaku.ijk.media.player.IjkMediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK -> "不支持渐进式播放"
+                tv.danmaku.ijk.media.player.IjkMediaPlayer.MEDIA_ERROR_IO -> "网络I/O错误"
+                tv.danmaku.ijk.media.player.IjkMediaPlayer.MEDIA_ERROR_MALFORMED -> "媒体格式错误"
+                tv.danmaku.ijk.media.player.IjkMediaPlayer.MEDIA_ERROR_UNSUPPORTED -> "不支持的媒体格式"
+                tv.danmaku.ijk.media.player.IjkMediaPlayer.MEDIA_ERROR_TIMED_OUT -> "播放超时"
+                else -> "播放错误($what, $extra)"
+            }
+
+            android.util.Log.e("PlaybackActivity", "IJKPlayer错误: $errorMessage")
+
             runOnUiThread {
-                Toast.makeText(this, "IJKPlayer 播放出错，切换回系统解码", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "IJKPlayer出错($errorMessage)，切换回系统解码器", Toast.LENGTH_LONG).show()
                 currentDecoderType = 0
+                // 保存解码器设置，避免再次尝试IJKPlayer
+                getSharedPreferences("settings", MODE_PRIVATE).edit()
+                    .putInt("decoder", 0)
+                    .apply()
                 initializePlayer()
             }
             true
@@ -1144,10 +1226,22 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
                     5000    // bufferForPlaybackAfterRebufferMs - 重新缓冲后播放所需缓冲
                 )
                 .build()
-            
+
+            // 配置音频轨道选择器 - 解决组播源有图没声音的问题
+            val trackSelector = androidx.media3.exoplayer.trackselection.DefaultTrackSelector(this)
+
+            // 配置音频参数以确保组播源音频兼容性（使用1.2.1兼容API）
+            val parametersBuilder = trackSelector.parameters.buildUpon()
+                .setPreferredAudioLanguage("zh") // 优先中文音频
+                .setMaxAudioChannelCount(8) // 支持多声道音频（AC3、DTS等）
+                .setPreferredAudioMimeType("audio/mp4a-latm") // 优先选择AAC音频格式
+
+            trackSelector.setParameters(parametersBuilder)
+
             // 创建 ExoPlayer 实例，支持所有主流协议
             // ExoPlayer 自动检测并支持: HLS, DASH, SmoothStreaming, RTSP, RTMP, HTTP Progressive
             player = ExoPlayer.Builder(this)
+                .setTrackSelector(trackSelector) // 添加音频轨道选择器
                 .setMediaSourceFactory(
                     androidx.media3.exoplayer.source.DefaultMediaSourceFactory(dataSourceFactory)
                 )
@@ -2017,15 +2111,15 @@ private fun toggleAspectRatio() {
             
             updateRunnableContainer[0]?.let { handler.removeCallbacks(it) }
             
-            if (info.isActivated) {
+            if (info.isValid) {
                 layoutStatus.visibility = View.VISIBLE
                 layoutNotActivated.visibility = View.GONE
-                
-                tvExpiry.text = "过期时间: ${info.expiryDate}"
-                
+
+                tvExpiry.text = "过期时间: ${info.expiryTime}"
+
                 val timerRunnable = object : Runnable {
                     override fun run() {
-                        val currentRemainingSeconds = info.remainingSeconds - (System.currentTimeMillis() - info.checkTime) / 1000
+                        val currentRemainingSeconds = info.remainingSeconds - (System.currentTimeMillis() - System.currentTimeMillis()) / 1000
                         if (currentRemainingSeconds > 0) {
                             val days = currentRemainingSeconds / 86400
                             val hours = (currentRemainingSeconds % 86400) / 3600

@@ -10,38 +10,38 @@
 10
 11    <!-- Required permissions -->
 12    <uses-permission android:name="android.permission.INTERNET" />
-12-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:6:5-67
-12-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:6:22-64
+12-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:6:5-67
+12-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:6:22-64
 13    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-13-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:7:5-79
-13-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:7:22-76
+13-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:7:5-79
+13-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:7:22-76
 14    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-14-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:8:5-81
-14-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:8:22-78
+14-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:8:5-81
+14-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:8:22-78
 15    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-15-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:9:5-79
-15-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:9:22-76
+15-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:9:5-79
+15-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:9:22-76
 16
 17    <!-- Declare this is a TV app (but optional for phones) -->
 18    <uses-feature
-18-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:12:5-14:36
+18-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:12:5-14:36
 19        android:name="android.hardware.touchscreen"
-19-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:13:9-52
+19-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:13:9-52
 20        android:required="false" />
-20-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:14:9-33
+20-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:14:9-33
 21    <uses-feature
-21-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:15:5-17:36
+21-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:15:5-17:36
 22        android:name="android.software.leanback"
-22-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:16:9-49
+22-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:16:9-49
 23        android:required="false" />
-23-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:17:9-33
+23-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:17:9-33
 24
 25    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-25-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:19:5-83
-25-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:19:22-80
+25-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:19:5-83
+25-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:19:22-80
 26    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-26-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:20:5-81
-26-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:20:22-78
+26-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:20:5-81
+26-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:20:22-78
 27
 28    <permission
 28-->[androidx.core:core:1.12.0] /Users/mac/.gradle/caches/transforms-3/9643920afc401bf92410edb017e2095b/transformed/core-1.12.0/AndroidManifest.xml:22:5-24:47
@@ -55,114 +55,114 @@
 32-->[androidx.core:core:1.12.0] /Users/mac/.gradle/caches/transforms-3/9643920afc401bf92410edb017e2095b/transformed/core-1.12.0/AndroidManifest.xml:26:22-94
 33
 34    <application
-34-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:22:5-84:19
+34-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:22:5-84:19
 35        android:allowBackup="true"
-35-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:23:9-35
+35-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:23:9-35
 36        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
 36-->[androidx.core:core:1.12.0] /Users/mac/.gradle/caches/transforms-3/9643920afc401bf92410edb017e2095b/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
 37        android:banner="@drawable/app_banner"
-37-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:26:9-46
+37-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:26:9-46
 38        android:debuggable="true"
 39        android:extractNativeLibs="true"
 40        android:icon="@mipmap/ic_launcher"
-40-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:24:9-43
+40-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:24:9-43
 41        android:label="@string/app_name"
-41-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:25:9-41
+41-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:25:9-41
 42        android:networkSecurityConfig="@xml/network_security_config"
-42-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:30:9-69
+42-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:30:9-69
 43        android:supportsRtl="true"
-43-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:27:9-35
+43-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:27:9-35
 44        android:theme="@style/Theme.LeafStudioTVPlayer"
-44-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:28:9-56
+44-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:28:9-56
 45        android:usesCleartextTraffic="true" >
-45-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:29:9-44
+45-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:29:9-44
 46        <provider
 47            android:name="androidx.core.content.FileProvider"
-47-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:34:13-62
+47-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:34:13-62
 48            android:authorities="com.leafstudio.tvplayer.fileprovider"
-48-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:35:13-64
+48-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:35:13-64
 49            android:exported="false"
-49-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:36:13-37
+49-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:36:13-37
 50            android:grantUriPermissions="true" >
-50-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:37:13-47
+50-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:37:13-47
 51            <meta-data
-51-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:38:13-40:54
+51-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:38:13-40:54
 52                android:name="android.support.FILE_PROVIDER_PATHS"
-52-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:39:17-67
+52-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:39:17-67
 53                android:resource="@xml/file_paths" />
-53-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:40:17-51
+53-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:40:17-51
 54        </provider>
 55
 56        <!-- Main launcher activity - routes to appropriate UI -->
 57        <activity
-57-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:44:9-56:20
+57-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:44:9-56:20
 58            android:name="com.leafstudio.tvplayer.MainActivity"
-58-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:45:13-41
+58-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:45:13-41
 59            android:exported="true"
-59-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:46:13-36
+59-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:46:13-36
 60            android:screenOrientation="sensorLandscape"
-60-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:47:13-56
+60-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:47:13-56
 61            android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" >
-61-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:48:13-83
+61-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:48:13-83
 62            <intent-filter>
-62-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:49:13-55:29
+62-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:49:13-55:29
 63                <action android:name="android.intent.action.MAIN" />
-63-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:50:17-69
-63-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:50:25-66
+63-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:50:17-69
+63-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:50:25-66
 64                <!-- Regular phone launcher -->
 65                <category android:name="android.intent.category.LAUNCHER" />
-65-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:52:17-77
-65-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:52:27-74
+65-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:52:17-77
+65-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:52:27-74
 66                <!-- TV launcher -->
 67                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-67-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:54:17-86
-67-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:54:27-83
+67-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:54:17-86
+67-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:54:27-83
 68            </intent-filter>
 69        </activity>
 70
 71        <!-- Phone UI Activity -->
 72        <activity
-72-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:59:9-62:63
+72-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:59:9-62:63
 73            android:name="com.leafstudio.tvplayer.PhoneMainActivity"
-73-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:60:13-46
+73-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:60:13-46
 74            android:exported="false"
-74-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:61:13-37
+74-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:61:13-37
 75            android:theme="@style/Theme.LeafStudioTVPlayer" />
-75-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:62:13-60
+75-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:62:13-60
 76
 77        <!-- TV UI Activity -->
 78        <activity
-78-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:65:9-68:53
+78-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:65:9-68:53
 79            android:name="com.leafstudio.tvplayer.TvMainActivity"
-79-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:66:13-43
+79-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:66:13-43
 80            android:exported="false"
-80-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:67:13-37
+80-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:67:13-37
 81            android:theme="@style/Theme.Leanback" />
-81-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:68:13-50
+81-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:68:13-50
 82
 83        <!-- Playback activity -->
 84        <activity
-84-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:71:9-75:66
+84-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:71:9-75:66
 85            android:name="com.leafstudio.tvplayer.PlaybackActivity"
-85-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:72:13-45
+85-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:72:13-45
 86            android:exported="false"
-86-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:73:13-37
+86-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:73:13-37
 87            android:screenOrientation="sensorLandscape"
-87-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:74:13-56
+87-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:74:13-56
 88            android:theme="@style/Theme.AppCompat.NoActionBar" />
-88-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:75:13-63
+88-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:75:13-63
 89
 90        <!-- Media activity -->
 91        <activity
-91-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:78:9-82:66
+91-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:78:9-82:66
 92            android:name="com.leafstudio.tvplayer.MediaActivity"
-92-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:79:13-42
+92-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:79:13-42
 93            android:exported="false"
-93-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:80:13-37
+93-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:80:13-37
 94            android:screenOrientation="sensorLandscape"
-94-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:81:13-56
+94-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:81:13-56
 95            android:theme="@style/Theme.AppCompat.NoActionBar" />
-95-->/Volumes/Ye 1/git_code/LeafStudio/app/src/main/AndroidManifest.xml:82:13-63
+95-->/Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/AndroidManifest.xml:82:13-63
 96
 97        <provider
 97-->[androidx.emoji2:emoji2:1.2.0] /Users/mac/.gradle/caches/transforms-3/9be94c330fcd0d11ad53cd39958f4b37/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:24:9-32:20

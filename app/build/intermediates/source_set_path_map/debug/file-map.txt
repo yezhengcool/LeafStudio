@@ -24,22 +24,23 @@ com.leafstudio.tvplayer.app-jetified-activity-1.8.0-22 /Users/mac/.gradle/caches
 com.leafstudio.tvplayer.app-lifecycle-livedata-2.6.2-23 /Users/mac/.gradle/caches/transforms-3/9d2ca68237eb57697335894959097aa4/transformed/lifecycle-livedata-2.6.2/res
 com.leafstudio.tvplayer.app-jetified-startup-runtime-1.1.1-24 /Users/mac/.gradle/caches/transforms-3/9e5db9b26d9392a98e8f1e9350d92494/transformed/jetified-startup-runtime-1.1.1/res
 com.leafstudio.tvplayer.app-lifecycle-runtime-2.6.2-25 /Users/mac/.gradle/caches/transforms-3/9ff93d6ffd75f1d8fc40f2473fd77de1/transformed/lifecycle-runtime-2.6.2/res
-com.leafstudio.tvplayer.app-drawerlayout-1.1.1-26 /Users/mac/.gradle/caches/transforms-3/ad62ee3f4e4a8069a8e40e8676fd3f21/transformed/drawerlayout-1.1.1/res
-com.leafstudio.tvplayer.app-jetified-ijkplayer-arm64-0.8.8-27 /Users/mac/.gradle/caches/transforms-3/b44f2055ee204884ca07484e1000e6c8/transformed/jetified-ijkplayer-arm64-0.8.8/res
-com.leafstudio.tvplayer.app-jetified-annotation-experimental-1.3.1-28 /Users/mac/.gradle/caches/transforms-3/b6308cb2b4567ad72ec16015c5ebead3/transformed/jetified-annotation-experimental-1.3.1/res
-com.leafstudio.tvplayer.app-jetified-profileinstaller-1.3.0-29 /Users/mac/.gradle/caches/transforms-3/b72b7b82f0312570e02e9e180c961d22/transformed/jetified-profileinstaller-1.3.0/res
-com.leafstudio.tvplayer.app-jetified-glide-4.16.0-30 /Users/mac/.gradle/caches/transforms-3/c72c20157f0c05e1567a7aecd0dec111/transformed/jetified-glide-4.16.0/res
-com.leafstudio.tvplayer.app-jetified-core-ktx-1.12.0-31 /Users/mac/.gradle/caches/transforms-3/cbef60c46bdbb7d8adc94911bd575789/transformed/jetified-core-ktx-1.12.0/res
-com.leafstudio.tvplayer.app-jetified-ijkplayer-java-0.8.8-32 /Users/mac/.gradle/caches/transforms-3/d128bfbc749aa7b64cff47d7bd9aadc0/transformed/jetified-ijkplayer-java-0.8.8/res
-com.leafstudio.tvplayer.app-jetified-media3-ui-1.2.1-33 /Users/mac/.gradle/caches/transforms-3/d816a8900c3e2726effa38bf41933dcb/transformed/jetified-media3-ui-1.2.1/res
-com.leafstudio.tvplayer.app-jetified-lifecycle-runtime-ktx-2.6.2-34 /Users/mac/.gradle/caches/transforms-3/dfc50640ca5ec2438ae27b65bd8c3075/transformed/jetified-lifecycle-runtime-ktx-2.6.2/res
-com.leafstudio.tvplayer.app-lifecycle-viewmodel-2.6.2-35 /Users/mac/.gradle/caches/transforms-3/eec1fdec4c4dbf9d360c66808bd58e65/transformed/lifecycle-viewmodel-2.6.2/res
-com.leafstudio.tvplayer.app-jetified-lifecycle-process-2.6.2-36 /Users/mac/.gradle/caches/transforms-3/f2c8427f0c51da91cce4cdafae00683a/transformed/jetified-lifecycle-process-2.6.2/res
-com.leafstudio.tvplayer.app-jetified-lifecycle-viewmodel-savedstate-2.6.2-37 /Users/mac/.gradle/caches/transforms-3/f9c2becdcc86221ffd62ba417ae719fb/transformed/jetified-lifecycle-viewmodel-savedstate-2.6.2/res
-com.leafstudio.tvplayer.app-pngs-38 /Volumes/Ye 1/git_code/LeafStudio/app/build/generated/res/pngs/debug
-com.leafstudio.tvplayer.app-resValues-39 /Volumes/Ye 1/git_code/LeafStudio/app/build/generated/res/resValues/debug
-com.leafstudio.tvplayer.app-packageDebugResources-40 /Volumes/Ye 1/git_code/LeafStudio/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
-com.leafstudio.tvplayer.app-packageDebugResources-41 /Volumes/Ye 1/git_code/LeafStudio/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
-com.leafstudio.tvplayer.app-merged_res-42 /Volumes/Ye 1/git_code/LeafStudio/app/build/intermediates/merged_res/debug
-com.leafstudio.tvplayer.app-debug-43 /Volumes/Ye 1/git_code/LeafStudio/app/src/debug/res
-com.leafstudio.tvplayer.app-main-44 /Volumes/Ye 1/git_code/LeafStudio/app/src/main/res
+com.leafstudio.tvplayer.app-jetified-media3-session-1.2.1-26 /Users/mac/.gradle/caches/transforms-3/a0c1bdf45972ec7ebe97d07364ea71c4/transformed/jetified-media3-session-1.2.1/res
+com.leafstudio.tvplayer.app-drawerlayout-1.1.1-27 /Users/mac/.gradle/caches/transforms-3/ad62ee3f4e4a8069a8e40e8676fd3f21/transformed/drawerlayout-1.1.1/res
+com.leafstudio.tvplayer.app-jetified-ijkplayer-arm64-0.8.8-28 /Users/mac/.gradle/caches/transforms-3/b44f2055ee204884ca07484e1000e6c8/transformed/jetified-ijkplayer-arm64-0.8.8/res
+com.leafstudio.tvplayer.app-jetified-annotation-experimental-1.3.1-29 /Users/mac/.gradle/caches/transforms-3/b6308cb2b4567ad72ec16015c5ebead3/transformed/jetified-annotation-experimental-1.3.1/res
+com.leafstudio.tvplayer.app-jetified-profileinstaller-1.3.0-30 /Users/mac/.gradle/caches/transforms-3/b72b7b82f0312570e02e9e180c961d22/transformed/jetified-profileinstaller-1.3.0/res
+com.leafstudio.tvplayer.app-jetified-glide-4.16.0-31 /Users/mac/.gradle/caches/transforms-3/c72c20157f0c05e1567a7aecd0dec111/transformed/jetified-glide-4.16.0/res
+com.leafstudio.tvplayer.app-jetified-core-ktx-1.12.0-32 /Users/mac/.gradle/caches/transforms-3/cbef60c46bdbb7d8adc94911bd575789/transformed/jetified-core-ktx-1.12.0/res
+com.leafstudio.tvplayer.app-jetified-ijkplayer-java-0.8.8-33 /Users/mac/.gradle/caches/transforms-3/d128bfbc749aa7b64cff47d7bd9aadc0/transformed/jetified-ijkplayer-java-0.8.8/res
+com.leafstudio.tvplayer.app-jetified-media3-ui-1.2.1-34 /Users/mac/.gradle/caches/transforms-3/d816a8900c3e2726effa38bf41933dcb/transformed/jetified-media3-ui-1.2.1/res
+com.leafstudio.tvplayer.app-jetified-lifecycle-runtime-ktx-2.6.2-35 /Users/mac/.gradle/caches/transforms-3/dfc50640ca5ec2438ae27b65bd8c3075/transformed/jetified-lifecycle-runtime-ktx-2.6.2/res
+com.leafstudio.tvplayer.app-lifecycle-viewmodel-2.6.2-36 /Users/mac/.gradle/caches/transforms-3/eec1fdec4c4dbf9d360c66808bd58e65/transformed/lifecycle-viewmodel-2.6.2/res
+com.leafstudio.tvplayer.app-jetified-lifecycle-process-2.6.2-37 /Users/mac/.gradle/caches/transforms-3/f2c8427f0c51da91cce4cdafae00683a/transformed/jetified-lifecycle-process-2.6.2/res
+com.leafstudio.tvplayer.app-jetified-lifecycle-viewmodel-savedstate-2.6.2-38 /Users/mac/.gradle/caches/transforms-3/f9c2becdcc86221ffd62ba417ae719fb/transformed/jetified-lifecycle-viewmodel-savedstate-2.6.2/res
+com.leafstudio.tvplayer.app-pngs-39 /Users/mac/Desktop/code_management/project_code/LeafStudio/app/build/generated/res/pngs/debug
+com.leafstudio.tvplayer.app-resValues-40 /Users/mac/Desktop/code_management/project_code/LeafStudio/app/build/generated/res/resValues/debug
+com.leafstudio.tvplayer.app-packageDebugResources-41 /Users/mac/Desktop/code_management/project_code/LeafStudio/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
+com.leafstudio.tvplayer.app-packageDebugResources-42 /Users/mac/Desktop/code_management/project_code/LeafStudio/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
+com.leafstudio.tvplayer.app-merged_res-43 /Users/mac/Desktop/code_management/project_code/LeafStudio/app/build/intermediates/merged_res/debug
+com.leafstudio.tvplayer.app-debug-44 /Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/debug/res
+com.leafstudio.tvplayer.app-main-45 /Users/mac/Desktop/code_management/project_code/LeafStudio/app/src/main/res

@@ -73,6 +73,8 @@ dependencies {
     implementation 'androidx.media3:media3-exoplayer-smoothstreaming:1.2.1' // SmoothStreaming
     implementation 'androidx.media3:media3-datasource-rtmp:1.2.1'     // RTMP support
     implementation 'androidx.media3:media3-ui:1.2.1'
+    implementation 'androidx.media3:media3-common:1.2.1'             // 通用组件
+    implementation 'androidx.media3:media3-session:1.2.1'             // 音频会话支持
     
     // RTMP扩展支持（需要rtmp library）
     implementation 'ar.com.hjg:pngj:2.1.0'

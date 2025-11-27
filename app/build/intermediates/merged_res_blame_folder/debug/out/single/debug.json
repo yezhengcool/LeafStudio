@@ -1,118 +1,118 @@
 [
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_dialog_about.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/dialog_about.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_item_route_sidebar.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/item_route_sidebar.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/mipmap-hdpi_ic_launcher.png.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/mipmap-hdpi/ic_launcher.png"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_activity_main.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/activity_main.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/mipmap-xxxhdpi_ic_launcher.png.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/mipmap-xxxhdpi/ic_launcher.png"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_dialog_menu.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/dialog_menu.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/mipmap-xxhdpi_ic_launcher.png.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/mipmap-xxhdpi/ic_launcher.png"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_activity_tv_main.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/activity_tv_main.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_item_channel_group.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/item_channel_group.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/mipmap-mdpi/ic_launcher.png"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_dialog_login.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/dialog_login.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_dialog_about.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/dialog_about.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_item_group.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/item_group.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_sidebar_route_list.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/sidebar_route_list.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/drawable_channel_button_bg.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/drawable/channel_button_bg.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_dialog_decoder_select.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/dialog_decoder_select.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_item_route_sidebar.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/item_route_sidebar.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/mipmap-xhdpi/ic_launcher.png"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_item_channel_phone.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/item_channel_phone.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/mipmap-xxxhdpi/ic_launcher.png"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_activity_phone_main.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/activity_phone_main.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_dialog_login.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/dialog_login.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/mipmap-xhdpi_ic_launcher.png.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/mipmap-xhdpi/ic_launcher.png"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_activity_phone_main.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/activity_phone_main.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/drawable_app_banner.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/drawable/app_banner.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_activity_playback.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/activity_playback.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_activity_media.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/activity_media.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/drawable_dialog_background.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/drawable/dialog_background.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_sidebar_route_list.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/sidebar_route_list.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_activity_media.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/activity_media.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_item_channel.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/item_channel.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_item_media_config.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/item_media_config.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/xml_file_paths.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/xml/file_paths.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/drawable_channel_button_bg.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/drawable/channel_button_bg.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_activity_tv_main.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/activity_tv_main.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_sidebar_channel_list.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/sidebar_channel_list.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/xml_network_security_config.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/xml/network_security_config.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_item_group.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/item_group.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/mipmap-mdpi_ic_launcher.png.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/mipmap-mdpi/ic_launcher.png"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_dialog_activation.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/dialog_activation.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_item_channel_sidebar.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/item_channel_sidebar.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/mipmap-hdpi/ic_launcher.png"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_dialog_menu.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/dialog_menu.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/xml_network_security_config.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/xml/network_security_config.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_activity_main.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/activity_main.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_item_channel_phone.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/item_channel_phone.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_activity_playback.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/activity_playback.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/xml_file_paths.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/xml/file_paths.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_dialog_decoder_select.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/dialog_decoder_select.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_item_channel_sidebar.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/item_channel_sidebar.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_item_media_config.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/item_media_config.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/drawable_app_banner.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/drawable/app_banner.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_sidebar_channel_list.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/sidebar_channel_list.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_item_channel.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/item_channel.xml"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/layout_dialog_activation.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/layout/dialog_activation.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/mipmap-xxhdpi/ic_launcher.png"
     },
     {
-        "merged": "com.leafstudio.tvplayer.app-merged_res-42:/drawable_dialog_background.xml.flat",
-        "source": "com.leafstudio.tvplayer.app-main-44:/drawable/dialog_background.xml"
+        "merged": "com.leafstudio.tvplayer.app-merged_res-43:/layout_item_channel_group.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-45:/layout/item_channel_group.xml"
     }
 ]
