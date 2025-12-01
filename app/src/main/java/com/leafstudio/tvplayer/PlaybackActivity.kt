@@ -407,7 +407,7 @@ private fun toggleDecoder() {
     val decoderName = when (currentDecoderType) {
         0 -> "系统解码(ExoPlayer)"
         1 -> "IJK硬解"
-        2 -> "IJK软解"
+        2 -> "VLC软解"
         else -> "系统解码"
     }
 
@@ -424,10 +424,10 @@ private fun toggleDecoder() {
     releasePlayer()
     
     // 延迟初始化新播放器，确保旧播放器的 Surface 和资源完全释放
-    // 这能有效避免切换时的 Native Crash（特别是从 ExoPlayer 切换到 IJKPlayer）
+    // VLC 需要更长的释放时间，增加到 600ms
     android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
         initializePlayer()
-    }, 300) // 300ms 延迟
+    }, 600) // 600ms 延迟，给 VLC 充足的释放时间
 }
 
 /**
@@ -803,6 +803,11 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
             )
             params.gravity = android.view.Gravity.CENTER
             textureView.layoutParams = params
+            
+            // 关键：让 TextureView 不拦截触摸事件，这样点击可以穿透到底层的控制按钮
+            textureView.isClickable = false
+            textureView.isFocusable = false
+            
             binding.flIjkContainer.addView(textureView)
             
             // 初始化 libVLC
@@ -821,6 +826,7 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
                         val vlcVout = player.vlcVout
                         if (!vlcVout.areViewsAttached()) {
                             vlcVout.setVideoSurface(android.view.Surface(surface), null)
+                            vlcVout.setWindowSize(width, height) // 立即设置窗口大小
                             vlcVout.attachViews()
                         }
                     }
