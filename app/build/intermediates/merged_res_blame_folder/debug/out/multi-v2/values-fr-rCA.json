@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.leafstudio.tvplayer.app-mergeDebugResources-41:/values-fr-rCA/values-fr-rCA.xml",
+            "outputFile": "com.leafstudio.tvplayer.app-mergeDebugResources-42:/values-fr-rCA/values-fr-rCA.xml",
             "map": [
                 {
                     "source": "/Users/mac/.gradle/caches/transforms-3/3fdcd8fc8fdde99adb1eb4c1f0cd10bd/transformed/appcompat-1.6.1/res/values-fr-rCA/values-fr-rCA.xml",

@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.leafstudio.tvplayer.app-mergeDebugResources-41:/values-mr/values-mr.xml",
+            "outputFile": "com.leafstudio.tvplayer.app-mergeDebugResources-42:/values-mr/values-mr.xml",
             "map": [
                 {
                     "source": "/Users/mac/.gradle/caches/transforms-3/620e4912bc9df192c34a938aad7c0cee/transformed/jetified-media3-exoplayer-1.2.1/res/values-mr/values-mr.xml",

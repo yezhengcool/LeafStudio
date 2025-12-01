@@ -86,7 +86,7 @@ dependencies {
     implementation 'tv.danmaku.ijk.media:ijkplayer-arm64:0.8.8'
     
     // libVLC - VLC media player library (更稳定的软解方案)
-    implementation 'org.videolan.android:libvlc-all:3.5.4'
+    implementation 'org.videolan.android:libvlc-all:3.4.0'
     
     // Networking
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'

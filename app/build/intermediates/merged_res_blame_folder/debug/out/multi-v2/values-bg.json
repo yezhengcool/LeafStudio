@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.leafstudio.tvplayer.app-mergeDebugResources-41:/values-bg/values-bg.xml",
+            "outputFile": "com.leafstudio.tvplayer.app-mergeDebugResources-42:/values-bg/values-bg.xml",
             "map": [
                 {
                     "source": "/Users/mac/.gradle/caches/transforms-3/9643920afc401bf92410edb017e2095b/transformed/core-1.12.0/res/values-bg/values-bg.xml",

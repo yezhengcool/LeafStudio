@@ -1,82 +1,78 @@
 [
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/activity_phone_main.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/activity_phone_main.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/item_media_config.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/item_media_config.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/item_media_config.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/item_media_config.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/dialog_about.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/dialog_about.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/item_channel_group.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/item_channel_group.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/activity_tv_main.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/activity_tv_main.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/activity_media.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/activity_media.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/activity_main.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/activity_main.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/item_channel.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/item_channel.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/sidebar_channel_list.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/sidebar_channel_list.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/dialog_menu.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/dialog_menu.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/item_channel.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/item_channel.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/dialog_activation.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/dialog_activation.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/item_route_sidebar.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/item_route_sidebar.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/activity_playback.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/activity_playback.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/item_channel_sidebar.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/item_channel_sidebar.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/item_channel_sidebar.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/item_channel_sidebar.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/item_channel_phone.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/item_channel_phone.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/activity_main.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/activity_main.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/activity_playback.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/activity_playback.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/sidebar_channel_list.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/sidebar_channel_list.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/sidebar_route_list.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/sidebar_route_list.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/dialog_about.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/dialog_about.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/dialog_login.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/dialog_login.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/dialog_decoder_select.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/dialog_decoder_select.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/dialog_menu.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/dialog_menu.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/item_route_sidebar.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/item_route_sidebar.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/activity_phone_main.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/activity_phone_main.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/dialog_login.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/dialog_login.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/dialog_decoder_select.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/dialog_decoder_select.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/sidebar_route_list.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/sidebar_route_list.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/item_channel_group.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/item_channel_group.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/activity_tv_main.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/activity_tv_main.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/dialog_activation.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/dialog_activation.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/item_channel_phone.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/item_channel_phone.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/item_group.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/item_group.xml"
     },
     {
-        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/item_group.xml",
-        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-45:/layout/item_group.xml"
-    },
-    {
-        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-42:/layout/activity_playback.xml",
-        "source": "com.leafstudio.tvplayer.app-main-45:/layout/activity_playback.xml"
+        "merged": "com.leafstudio.tvplayer.app-mergeDebugResources-43:/layout/activity_media.xml",
+        "source": "com.leafstudio.tvplayer.app-main-46:/layout/activity_media.xml"
     }
 ]
