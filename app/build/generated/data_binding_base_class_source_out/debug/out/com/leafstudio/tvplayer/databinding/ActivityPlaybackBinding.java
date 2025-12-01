@@ -45,6 +45,9 @@ public final class ActivityPlaybackBinding implements ViewBinding {
   public final Button btnRouteList;
 
   @NonNull
+  public final FrameLayout flIjkContainer;
+
+  @NonNull
   public final ImageView ivLoadingBackground;
 
   @NonNull
@@ -80,8 +83,9 @@ public final class ActivityPlaybackBinding implements ViewBinding {
   private ActivityPlaybackBinding(@NonNull FrameLayout rootView,
       @NonNull LinearLayout bottomControlsContainer, @NonNull Button btnAspectRatio,
       @NonNull Button btnChannelList, @NonNull Button btnDecoder, @NonNull Button btnMedia,
-      @NonNull Button btnMenu, @NonNull Button btnRouteList, @NonNull ImageView ivLoadingBackground,
-      @NonNull PlayerView playerView, @NonNull SidebarChannelListBinding sidebarChannelRoot,
+      @NonNull Button btnMenu, @NonNull Button btnRouteList, @NonNull FrameLayout flIjkContainer,
+      @NonNull ImageView ivLoadingBackground, @NonNull PlayerView playerView,
+      @NonNull SidebarChannelListBinding sidebarChannelRoot,
       @NonNull SidebarRouteListBinding sidebarRouteRoot, @NonNull LinearLayout topStatusContainer,
       @NonNull TextView tvChannelNumber, @NonNull TextView tvCurrentTime,
       @NonNull TextView tvMarquee, @NonNull TextView tvResolution,
@@ -94,6 +98,7 @@ public final class ActivityPlaybackBinding implements ViewBinding {
     this.btnMedia = btnMedia;
     this.btnMenu = btnMenu;
     this.btnRouteList = btnRouteList;
+    this.flIjkContainer = flIjkContainer;
     this.ivLoadingBackground = ivLoadingBackground;
     this.playerView = playerView;
     this.sidebarChannelRoot = sidebarChannelRoot;
@@ -176,6 +181,12 @@ public final class ActivityPlaybackBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.fl_ijk_container;
+      FrameLayout flIjkContainer = ViewBindings.findChildViewById(rootView, id);
+      if (flIjkContainer == null) {
+        break missingId;
+      }
+
       id = R.id.iv_loading_background;
       ImageView ivLoadingBackground = ViewBindings.findChildViewById(rootView, id);
       if (ivLoadingBackground == null) {
@@ -246,9 +257,9 @@ public final class ActivityPlaybackBinding implements ViewBinding {
 
       return new ActivityPlaybackBinding((FrameLayout) rootView, bottomControlsContainer,
           btnAspectRatio, btnChannelList, btnDecoder, btnMedia, btnMenu, btnRouteList,
-          ivLoadingBackground, playerView, binding_sidebarChannelRoot, binding_sidebarRouteRoot,
-          topStatusContainer, tvChannelNumber, tvCurrentTime, tvMarquee, tvResolution,
-          tvVideoResolution, tvWeather);
+          flIjkContainer, ivLoadingBackground, playerView, binding_sidebarChannelRoot,
+          binding_sidebarRouteRoot, topStatusContainer, tvChannelNumber, tvCurrentTime, tvMarquee,
+          tvResolution, tvVideoResolution, tvWeather);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

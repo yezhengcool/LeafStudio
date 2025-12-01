@@ -82,7 +82,12 @@ class PlaybackActivity : AppCompatActivity() {
     
     // IJKPlayer support (using Any to avoid compilation errors when library is not present)
     private var ijkMediaPlayer: Any? = null
-    private var currentDecoderType = 0 // 0=ExoPlayer, 1=IJK硬解, 2=IJK软解
+    // VLC Player support
+    private var vlcMediaPlayer: org.videolan.libvlc.MediaPlayer? = null
+    private var libVLC: org.videolan.libvlc.LibVLC? = null
+    
+    private var currentDecoderType = 0 // 0=ExoPlayer(系统), 1=IJK硬解, 2=VLC软解
+    private var decoderRetryCount = 0 // 当前URL解码器重试次数
     
     companion object {
         const val EXTRA_ALL_CHANNELS = "all_channels"
@@ -99,6 +104,17 @@ class PlaybackActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityPlaybackBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        
+        // 立即初始化解码器按钮文本，避免显示默认值
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        currentDecoderType = prefs.getInt("decoder", 0)
+        updateDecoderButtonText()
+        
+        // 设置全局异常捕获，帮助排查闪退问题
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            android.util.Log.e("PlaybackActivity", "CRASH: Uncaught Exception on thread ${thread.name}", throwable)
+            throwable.printStackTrace()
+        }
         
         // 检查激活状态 - 必须通过API，以便数据同步到管理后台
         lifecycleScope.launch {
@@ -400,10 +416,82 @@ private fun toggleDecoder() {
     } else {
         Toast.makeText(this, "正在切换为: $decoderName...", Toast.LENGTH_SHORT).show()
     }
+    
+    // 更新按钮文本
+    updateDecoderButtonText()
 
+    // 先释放旧播放器
+    releasePlayer()
+    
+    // 延迟初始化新播放器，确保旧播放器的 Surface 和资源完全释放
+    // 这能有效避免切换时的 Native Crash（特别是从 ExoPlayer 切换到 IJKPlayer）
+    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+        initializePlayer()
+    }, 300) // 300ms 延迟
+}
+
+/**
+ * 尝试切换到下一个解码器
+ * 顺序: 系统(0) -> 软解(2) -> 硬解(1) -> 系统(0)
+ * @return true: 成功切换解码器; false: 所有解码器已尝试完毕
+ */
+private fun trySwitchToNextDecoder(): Boolean {
+    // 如果已经重试了3次（覆盖了所有解码器类型），则不再尝试解码器切换，而是应该切换线路
+    if (decoderRetryCount >= 3) {
+        return false
+    }
+    
+    decoderRetryCount++
+
+    val nextDecoder = when (currentDecoderType) {
+        0 -> 2 // 系统 -> 软解
+        2 -> 1 // 软解 -> 硬解
+        1 -> 0 // 硬解 -> 系统
+        else -> 0
+    }
+    
+    // 检查IJKPlayer可用性
+    if (nextDecoder != 0 && !isIJKPlayerAvailable()) {
+        // 如果IJK不可用，跳过直接回到系统
+        currentDecoderType = 0
+    } else {
+        currentDecoderType = nextDecoder
+    }
+    
+    // 保存设置
+    getSharedPreferences("settings", MODE_PRIVATE).edit()
+        .putInt("decoder", currentDecoderType)
+        .apply()
+        
+    // 更新按钮文本
+    updateDecoderButtonText()
+    
+    val decoderName = when (currentDecoderType) {
+        0 -> "系统解码"
+        1 -> "IJK硬解"
+        2 -> "IJK软解"
+        else -> "系统解码"
+    }
+    Toast.makeText(this, "播放失败，自动切换为: $decoderName", Toast.LENGTH_SHORT).show()
+    
     // 重新初始化
     releasePlayer()
     initializePlayer()
+    
+    return true
+}
+
+/**
+ * 更新解码器按钮文本
+ */
+private fun updateDecoderButtonText() {
+    val text = when (currentDecoderType) {
+        0 -> "系统"
+        1 -> "硬解"
+        2 -> "软解"
+        else -> "系统"
+    }
+    binding.btnDecoder.text = text
 }
 
 /**
@@ -457,21 +545,50 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         runOnUiThread {
             Toast.makeText(this, "IJKPlayer库不可用，自动切换到系统解码器", Toast.LENGTH_LONG).show()
             currentDecoderType = 0
+            
+            // 立即更新按钮文本
+            updateDecoderButtonText()
+            
             initializeExoPlayer(currentUrl)
+        }
+        return
+    }
+    
+    // 【硬解保护】检查硬解是否被禁用
+    val hardwareDecoderDisabled = getSharedPreferences("settings", MODE_PRIVATE)
+        .getBoolean("hardware_decoder_disabled", false)
+    
+    if (useHardwareDecoder && hardwareDecoderDisabled) {
+        android.util.Log.w("PlaybackActivity", "硬解已被禁用（之前崩溃过），自动切换到软解")
+        runOnUiThread {
+            Toast.makeText(this, "该设备不支持硬解，已切换到软解", Toast.LENGTH_SHORT).show()
+            currentDecoderType = 2 // 切换到软解
+            
+            getSharedPreferences("settings", MODE_PRIVATE).edit()
+                .putInt("decoder", 2)
+                .apply()
+            
+            updateDecoderButtonText()
+            initializeIJKPlayer(currentUrl, false) // 使用软解重新初始化
         }
         return
     }
 
     try {
+        android.util.Log.d("PlaybackActivity", "IJKPlayer: 开始初始化, URL=$currentUrl, 硬解=$useHardwareDecoder")
 
         // 2. 创建实例
         val player = tv.danmaku.ijk.media.player.IjkMediaPlayer()
         ijkMediaPlayer = player
+        
+        // 开启 IJKPlayer 内部日志
+        tv.danmaku.ijk.media.player.IjkMediaPlayer.native_setLogLevel(tv.danmaku.ijk.media.player.IjkMediaPlayer.IJK_LOG_DEBUG)
 
         // 3. 设置参数 (精简版，提高稳定性)
         // 通用设置
         player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "opensles", 0L) // 关闭 OpenSL ES，使用 AudioTrack
-        player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "overlay-format", tv.danmaku.ijk.media.player.IjkMediaPlayer.SDL_FCC_RV32.toLong()) // 使用 RV32 格式
+        // 移除 overlay-format，让其自动选择，防止部分设备不支持 RV32 导致崩溃
+        // player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "overlay-format", tv.danmaku.ijk.media.player.IjkMediaPlayer.SDL_FCC_RV32.toLong())
         player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", 1L) // 允许丢帧
         player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", 1L) // 准备好自动播放
         
@@ -485,39 +602,71 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
 
         // 硬解/软解设置
         if (useHardwareDecoder) {
+            android.util.Log.d("PlaybackActivity", "IJKPlayer: 启用硬解配置")
             player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec", 1L)
             player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-auto-rotate", 1L)
             player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-handle-resolution-change", 1L)
+            // 硬解额外配置：允许所有编解码器，提高兼容性
+            player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-all-videos", 1L)
+            // 硬解同步模式
+            player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-sync", 0L)
         } else {
+            android.util.Log.d("PlaybackActivity", "IJKPlayer: 启用软解配置")
             player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec", 0L)
+            player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-auto-rotate", 0L)
+            player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-handle-resolution-change", 0L)
         }
 
         // 4. 设置数据源
+        android.util.Log.d("PlaybackActivity", "IJKPlayer: 设置数据源")
         player.dataSource = currentUrl
         
         // 5. 设置显示 Surface (动态创建，避免 ExoPlayer 冲突)
-        binding.playerView.removeAllViews()
-        val surfaceView = android.view.SurfaceView(this)
+        // 隐藏 ExoPlayer 视图
+        binding.playerView.visibility = View.GONE
+        binding.playerView.player = null
+        
+        // 显示 IJKPlayer 容器
+        binding.flIjkContainer.visibility = View.VISIBLE
+        binding.flIjkContainer.removeAllViews()
+        
+        android.util.Log.d("PlaybackActivity", "IJKPlayer: 创建 TextureView")
+        val textureView = android.view.TextureView(this)
         val params = android.widget.FrameLayout.LayoutParams(
             android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
             android.widget.FrameLayout.LayoutParams.MATCH_PARENT
         )
         params.gravity = android.view.Gravity.CENTER
-        surfaceView.layoutParams = params
-        binding.playerView.addView(surfaceView)
+        textureView.layoutParams = params
+        binding.flIjkContainer.addView(textureView)
         
-        surfaceView.holder.addCallback(object : android.view.SurfaceHolder.Callback {
-            override fun surfaceCreated(holder: android.view.SurfaceHolder) {
-                player.setDisplay(holder)
-            }
-            override fun surfaceChanged(holder: android.view.SurfaceHolder, format: Int, width: Int, height: Int) {}
-            override fun surfaceDestroyed(holder: android.view.SurfaceHolder) {
-                // Surface 销毁时，必须解绑，否则可能导致 Native Crash
-                if (ijkMediaPlayer != null) {
-                    player.setDisplay(null)
+        textureView.surfaceTextureListener = object : android.view.TextureView.SurfaceTextureListener {
+            override fun onSurfaceTextureAvailable(surfaceTexture: android.graphics.SurfaceTexture, width: Int, height: Int) {
+                try {
+                    if (ijkMediaPlayer != null && ijkMediaPlayer === player) {
+                        val surface = android.view.Surface(surfaceTexture)
+                        player.setSurface(surface)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
             }
-        })
+            
+            override fun onSurfaceTextureSizeChanged(surface: android.graphics.SurfaceTexture, width: Int, height: Int) {}
+            
+            override fun onSurfaceTextureDestroyed(surfaceTexture: android.graphics.SurfaceTexture): Boolean {
+                try {
+                    if (ijkMediaPlayer != null && ijkMediaPlayer === player) {
+                        player.setSurface(null)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+                return true
+            }
+            
+            override fun onSurfaceTextureUpdated(surface: android.graphics.SurfaceTexture) {}
+        }
         
         // 6. 设置监听器
         player.setOnPreparedListener {
@@ -542,13 +691,32 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
             android.util.Log.e("PlaybackActivity", "IJKPlayer错误: $errorMessage")
 
             runOnUiThread {
-                Toast.makeText(this, "IJKPlayer出错($errorMessage)，切换回系统解码器", Toast.LENGTH_LONG).show()
-                currentDecoderType = 0
-                // 保存解码器设置，避免再次尝试IJKPlayer
-                getSharedPreferences("settings", MODE_PRIVATE).edit()
-                    .putInt("decoder", 0)
-                    .apply()
-                initializePlayer()
+                android.util.Log.e("PlaybackActivity", "IJKPlayer出错($errorMessage)，尝试切换解码器")
+                
+                // 如果是硬解错误，标记硬解为不可用并切换到软解
+                if (useHardwareDecoder) {
+                    android.util.Log.w("PlaybackActivity", "硬解播放错误，禁用硬解功能")
+                    getSharedPreferences("settings", MODE_PRIVATE).edit()
+                        .putBoolean("hardware_decoder_disabled", true)
+                        .apply()
+                    
+                    Toast.makeText(this, "硬解不兼容，已自动切换到软解", Toast.LENGTH_LONG).show()
+                    currentDecoderType = 2
+                    
+                    getSharedPreferences("settings", MODE_PRIVATE).edit()
+                        .putInt("decoder", 2)
+                        .apply()
+                    
+                    updateDecoderButtonText()
+                    releasePlayer()
+                    
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        initializePlayer()
+                    }, 300)
+                } else {
+                    // 软解错误，优先尝试切换线路（可能是流的问题，而不是解码器问题）
+                    handlePlaybackError(null)
+                }
             }
             true
         }
@@ -558,16 +726,55 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         }
         
         // 7. 异步准备
-        player.prepareAsync()
+        // 延迟调用 prepareAsync，确保 TextureView 完全添加到视图树并完成 layout
+        // 这能避免 Surface 还未就绪时就开始准备导致的崩溃
+        textureView.post {
+            try {
+                if (ijkMediaPlayer != null && ijkMediaPlayer === player) {
+                    android.util.Log.d("PlaybackActivity", "IJKPlayer: 开始准备播放")
+                    player.prepareAsync()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                runOnUiThread {
+                    android.util.Log.e("PlaybackActivity", "IJKPlayer准备失败，尝试切换解码器")
+                    if (!trySwitchToNextDecoder()) {
+                        handlePlaybackError(null)
+                    }
+                }
+            }
+        }
         
     } catch (e: Throwable) {
         e.printStackTrace()
-        // 捕获所有异常（包括 LinkError），降级到 ExoPlayer
+        // 捕获所有异常（包括 LinkError），尝试切换解码器
         runOnUiThread {
-            Toast.makeText(this, "IJKPlayer 启动失败，已切换回系统解码", Toast.LENGTH_LONG).show()
-            currentDecoderType = 0
-            getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("decoder", 0).apply()
-            initializeExoPlayer(currentUrl)
+            android.util.Log.e("PlaybackActivity", "IJKPlayer启动失败，尝试切换解码器")
+            
+            // 如果是硬解崩溃，标记硬解为不可用
+            if (useHardwareDecoder) {
+                android.util.Log.w("PlaybackActivity", "硬解崩溃，禁用硬解功能")
+                getSharedPreferences("settings", MODE_PRIVATE).edit()
+                    .putBoolean("hardware_decoder_disabled", true)
+                    .apply()
+                
+                Toast.makeText(this, "硬解不兼容，已自动切换到软解", Toast.LENGTH_LONG).show()
+                currentDecoderType = 2 // 直接切换到软解
+                
+                getSharedPreferences("settings", MODE_PRIVATE).edit()
+                    .putInt("decoder", 2)
+                    .apply()
+                
+                updateDecoderButtonText()
+                
+                // 延迟重新初始化，使用软解
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    initializePlayer()
+                }, 300)
+            } else {
+                // 软解崩溃，优先尝试切换线路
+                handlePlaybackError(null)
+            }
         }
     }
 }
@@ -1054,6 +1261,7 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         
         currentChannelIndex = index
         hasTriedAllRoutes = false
+        decoderRetryCount = 0 // 重置解码器重试次数
         
         // 保存当前频道ID和线路索引
         val currentChannel = getCurrentChannel()
@@ -1089,6 +1297,7 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         
         if (currentChannel.switchToRoute(routeIndex)) {
             hasTriedAllRoutes = false
+            decoderRetryCount = 0 // 重置解码器重试次数
             
             // 保存线路选择
             val prefs = getSharedPreferences("settings", MODE_PRIVATE)
@@ -1138,11 +1347,15 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
             // 读取解码器设置
             val prefs = getSharedPreferences("settings", MODE_PRIVATE)
             currentDecoderType = prefs.getInt("decoder", 0)
+            
+            // 更新解码器按钮文本
+            updateDecoderButtonText()
 
-            // 根据解码器类型初始化播放器（保持原有选择逻辑）
+            // 根据解码器类型初始化播放器
             when (currentDecoderType) {
-                0 -> initializeExoPlayer(currentUrl)
-                1, 2 -> initializeIJKPlayer(currentUrl, currentDecoderType == 1)
+                0 -> initializeExoPlayer(currentUrl) // 系统解码
+                1 -> initializeIJKPlayer(currentUrl, true) // IJK硬解
+                2 -> initializeVLCPlayer(currentUrl) // VLC软解
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -1248,15 +1461,17 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
                 .setLoadControl(loadControl)
                 .build().also { exoPlayer ->
                 
-                // 只清理 IJKPlayer 添加的 SurfaceView(如果有的话)
-                // 不要清理 PlayerView 的内部视图
-                if (ijkMediaPlayer != null) {
-                    // 从 IJKPlayer 切换过来,需要清理 SurfaceView
-                    binding.playerView.removeAllViews()
-                }
+                // 清理 IJKPlayer 容器
+                binding.flIjkContainer.removeAllViews()
+                binding.flIjkContainer.visibility = View.GONE
                 
                 // 绑定 ExoPlayer
                 binding.playerView.player = exoPlayer
+                
+                // 确保 PlayerView 可见并强制刷新
+                binding.playerView.visibility = View.VISIBLE
+                binding.playerView.requestLayout()
+                binding.playerView.invalidate()
                 
                 // 设置视频缩放模式
                 val resizeMode = when (aspectRatioMode) {
@@ -1298,11 +1513,17 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
                     
                     override fun onPlaybackStateChanged(playbackState: Int) {
                         when (playbackState) {
+                            Player.STATE_BUFFERING -> {
+                                // 缓冲中，显示加载背景
+                                binding.ivLoadingBackground.visibility = View.VISIBLE
+                            }
                             Player.STATE_READY -> {
                                 // 播放器准备就绪，重置重试标志
                                 hasTriedAllRoutes = false
                                 // 隐藏加载背景
                                 binding.ivLoadingBackground.visibility = View.GONE
+                                // 再次确保 PlayerView 可见
+                                binding.playerView.visibility = View.VISIBLE
                             }
                             Player.STATE_ENDED -> {
                                 // 播放结束
@@ -1356,7 +1577,17 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
     /**
      * 处理播放错误
      */
-    private fun handlePlaybackError(error: PlaybackException) {
+    /**
+     * 处理播放错误
+     */
+    private fun handlePlaybackError(error: PlaybackException?) {
+        // 1. 优先尝试切换解码器
+        if (trySwitchToNextDecoder()) {
+            android.util.Log.e("PlaybackActivity", "播放出错，尝试切换解码器")
+            return
+        }
+        
+        // 2. 所有解码器都试过了，尝试切换线路
         val currentChannel = getCurrentChannel() ?: return
         
         // 如果有多个线路且还没尝试完所有线路
@@ -1368,6 +1599,9 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
                     getString(R.string.auto_switching_route, currentChannel.currentRouteIndex + 1),
                     Toast.LENGTH_SHORT
                 ).show()
+                
+                // 切换线路时重置解码器重试次数（虽然switchToRoute里已经重置了，这里再次确认）
+                decoderRetryCount = 0
                 
                 releasePlayer()
                 initializePlayer()
@@ -1425,6 +1659,9 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
     /**
      * 释放播放器资源
      */
+    /**
+     * 释放播放器资源
+     */
     private fun releasePlayer() {
         // 释放 ExoPlayer
         player?.let { exoPlayer ->
@@ -1437,6 +1674,10 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         if (ijkMediaPlayer is tv.danmaku.ijk.media.player.IMediaPlayer) {
             try {
                 val ijk = ijkMediaPlayer as tv.danmaku.ijk.media.player.IMediaPlayer
+                // 关键：先置空全局变量，防止 Surface 回调访问已释放的播放器
+                ijkMediaPlayer = null
+                
+                ijk.setSurface(null)
                 ijk.stop()
                 ijk.release()
             } catch (e: Exception) {
@@ -1445,10 +1686,18 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         }
         ijkMediaPlayer = null
         
-        // 清理 playerView
+        // 只有在使用 IJKPlayer 时才清理 IJK 容器
+        if (currentDecoderType != 0) {
+            try {
+                binding.flIjkContainer.removeAllViews()
+                binding.flIjkContainer.visibility = View.GONE
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        
         try {
             binding.playerView.player = null
-            binding.playerView.removeAllViews()
         } catch (e: Exception) {
             e.printStackTrace()
         }

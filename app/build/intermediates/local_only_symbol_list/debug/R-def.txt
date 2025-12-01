@@ -45,6 +45,7 @@ id channel_recyclerview
 id channel_title
 id decoder_radio_group
 id error_text
+id fl_ijk_container
 id group_name
 id group_recyclerview
 id item_content

@@ -16,6 +16,14 @@
         app:surface_type="surface_view"
         app:show_buffering="when_playing" />
 
+    <!-- IJKPlayer 专用容器 -->
+    <FrameLayout
+        android:id="@+id/fl_ijk_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:background="@color/black" />
+
     <!-- 加载背景图 -->
     <ImageView
         android:id="@+id/iv_loading_background"
@@ -162,7 +170,7 @@
             android:id="@+id/btn_decoder"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="解码"
+            android:text="系统"
             android:textColor="@android:color/white"
             android:textSize="14sp"
             android:fontFamily="sans-serif-condensed"
