@@ -1,34 +1,187 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="#FF000000">
 
-    <!-- RecyclerView 显示配置列表 -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/media_recycler_view"
+    <!-- 顶部功能栏 -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="16dp"
-        android:clipToPadding="false" />
-
-    <!-- 加载进度条 -->
-    <ProgressBar
-        android:id="@+id/progress_bar"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone" />
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:gravity="center_vertical">
 
-    <!-- 错误提示 -->
+        <TextView
+            android:id="@+id/tv_current_source"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="首页"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:background="@drawable/channel_button_bg"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:layout_marginEnd="16dp"
+            android:focusable="true"
+            android:clickable="true"/>
+
+        <HorizontalScrollView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_history"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="历史"
+                    android:textColor="@android:color/white"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawableStart="@android:drawable/ic_menu_recent_history"
+                    android:drawableTint="@android:color/white"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"/>
+
+                <Button
+                    android:id="@+id/btn_live"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="直播"
+                    android:textColor="@android:color/white"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawableStart="@android:drawable/ic_menu_view"
+                    android:drawableTint="@android:color/white"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"/>
+
+                <Button
+                    android:id="@+id/btn_search"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="搜索"
+                    android:textColor="@android:color/white"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawableStart="@android:drawable/ic_menu_search"
+                    android:drawableTint="@android:color/white"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"/>
+                    
+                <Button
+                    android:id="@+id/btn_push"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="推送"
+                    android:textColor="@android:color/white"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawableStart="@android:drawable/ic_menu_send"
+                    android:drawableTint="@android:color/white"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"/>
+                    
+                <Button
+                    android:id="@+id/btn_favorites"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="收藏"
+                    android:textColor="@android:color/white"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawableStart="@android:drawable/btn_star"
+                    android:drawableTint="@android:color/white"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"/>
+                    
+                <Button
+                    android:id="@+id/btn_settings"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="设置"
+                    android:textColor="@android:color/white"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawableStart="@android:drawable/ic_menu_preferences"
+                    android:drawableTint="@android:color/white"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"/>
+
+            </LinearLayout>
+        </HorizontalScrollView>
+        
+        <TextView
+            android:id="@+id/tv_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="12:00"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"/>
+
+    </LinearLayout>
+
+    <!-- 公告走马灯 -->
     <TextView
-        android:id="@+id/error_text"
-        android:layout_width="wrap_content"
+        android:id="@+id/tv_notice_marquee"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:textColor="@android:color/white"
-        android:textSize="16sp"
-        android:visibility="gone"
-        android:padding="16dp" />
+        android:text=""
+        android:textColor="#FFFFAA00"
+        android:textSize="14sp"
+        android:singleLine="true"
+        android:ellipsize="marquee"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:scrollHorizontally="true"
+        android:background="#AA000000"
+        android:padding="8dp"
+        android:visibility="gone"/>
 
-</FrameLayout>
+    <!-- 分类栏 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_categories"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp"
+        android:clipToPadding="false"/>
+
+    <!-- 内容区域 -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="8dp"
+            android:clipToPadding="false"/>
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/error_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textColor="@android:color/white"
+            android:visibility="gone"/>
+
+    </FrameLayout>
+
+</LinearLayout>
