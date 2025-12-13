@@ -1,0 +1,38 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.leafstudio.tvplayer.app-mergeLeanbackArm64_v8aDebugResources-53:/values-v18/values-v18.xml",
+            "map": [
+                {
+                    "source": "/Users/mac/.gradle/caches/transforms-3/1b8d0a5c5e13f39aba1be3c8f083b5b1/transformed/appcompat-1.7.1/res/values-v18/values-v18.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "48",
+                        "endOffsets": "99"
+                    }
+                },
+                {
+                    "source": "/Users/mac/.gradle/caches/transforms-3/1bf33e4a1dfb2092b4ce06be6e17b169/transformed/leanback-1.0.0/res/values-v18/values-v18.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "10",
+                        "endColumns": "12",
+                        "endOffsets": "642"
+                    },
+                    "to": {
+                        "startLines": "3",
+                        "startColumns": "4",
+                        "startOffsets": "104",
+                        "endLines": "11",
+                        "endColumns": "12",
+                        "endOffsets": "691"
+                    }
+                }
+            ]
+        }
+    ]
+}

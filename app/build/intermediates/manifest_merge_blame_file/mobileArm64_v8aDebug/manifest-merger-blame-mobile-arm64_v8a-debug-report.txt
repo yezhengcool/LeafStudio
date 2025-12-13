@@ -1,0 +1,372 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.leafstudio.tvplayer"
+4    android:versionCode="476"
+5    android:versionName="4.7.6" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="21"
+9        android:targetSdkVersion="28" />
+10
+11    <!-- Required permissions -->
+12    <uses-permission android:name="android.permission.INTERNET" />
+12-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:6:5-67
+12-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:6:22-64
+13    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+13-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:7:5-79
+13-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:7:22-76
+14    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+14-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:8:5-81
+14-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:8:22-78
+15    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+15-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:9:5-79
+15-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:9:22-76
+16
+17    <!-- Declare this is a TV app (but optional for phones) -->
+18    <uses-feature
+18-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:12:5-14:36
+19        android:name="android.hardware.touchscreen"
+19-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:13:9-52
+20        android:required="false" />
+20-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:14:9-33
+21    <uses-feature
+21-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:15:5-17:36
+22        android:name="android.software.leanback"
+22-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:16:9-49
+23        android:required="false" />
+23-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:17:9-33
+24
+25    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+25-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:19:5-83
+25-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:19:22-80
+26    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+26-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:20:5-81
+26-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:20:22-78
+27    <uses-permission android:name="android.permission.USE_BIOMETRIC" /> <!-- suppress DeprecatedClassUsageInspection -->
+27-->[androidx.biometric:biometric:1.1.0] /Users/mac/.gradle/caches/transforms-3/059ebcb169886dfa30a18d13cd3d9eb6/transformed/biometric-1.1.0/AndroidManifest.xml:24:5-72
+27-->[androidx.biometric:biometric:1.1.0] /Users/mac/.gradle/caches/transforms-3/059ebcb169886dfa30a18d13cd3d9eb6/transformed/biometric-1.1.0/AndroidManifest.xml:24:22-69
+28    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
+28-->[androidx.biometric:biometric:1.1.0] /Users/mac/.gradle/caches/transforms-3/059ebcb169886dfa30a18d13cd3d9eb6/transformed/biometric-1.1.0/AndroidManifest.xml:27:5-74
+28-->[androidx.biometric:biometric:1.1.0] /Users/mac/.gradle/caches/transforms-3/059ebcb169886dfa30a18d13cd3d9eb6/transformed/biometric-1.1.0/AndroidManifest.xml:27:22-71
+29
+30    <permission
+30-->[androidx.core:core:1.13.1] /Users/mac/.gradle/caches/transforms-3/b3547f5af51c9aa0fc1353ec1ad29946/transformed/core-1.13.1/AndroidManifest.xml:22:5-24:47
+31        android:name="com.leafstudio.tvplayer.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+31-->[androidx.core:core:1.13.1] /Users/mac/.gradle/caches/transforms-3/b3547f5af51c9aa0fc1353ec1ad29946/transformed/core-1.13.1/AndroidManifest.xml:23:9-81
+32        android:protectionLevel="signature" />
+32-->[androidx.core:core:1.13.1] /Users/mac/.gradle/caches/transforms-3/b3547f5af51c9aa0fc1353ec1ad29946/transformed/core-1.13.1/AndroidManifest.xml:24:9-44
+33
+34    <uses-permission android:name="com.leafstudio.tvplayer.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+34-->[androidx.core:core:1.13.1] /Users/mac/.gradle/caches/transforms-3/b3547f5af51c9aa0fc1353ec1ad29946/transformed/core-1.13.1/AndroidManifest.xml:26:5-97
+34-->[androidx.core:core:1.13.1] /Users/mac/.gradle/caches/transforms-3/b3547f5af51c9aa0fc1353ec1ad29946/transformed/core-1.13.1/AndroidManifest.xml:26:22-94
+35    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+35-->[com.lzy.net:okgo:3.0.4] /Users/mac/.gradle/caches/transforms-3/b7ce8fe11ee487329b1ad3e1982d3016/transformed/jetified-okgo-3.0.4/AndroidManifest.xml:27:5-80
+35-->[com.lzy.net:okgo:3.0.4] /Users/mac/.gradle/caches/transforms-3/b7ce8fe11ee487329b1ad3e1982d3016/transformed/jetified-okgo-3.0.4/AndroidManifest.xml:27:22-77
+36    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
+36-->[com.lzy.net:okgo:3.0.4] /Users/mac/.gradle/caches/transforms-3/b7ce8fe11ee487329b1ad3e1982d3016/transformed/jetified-okgo-3.0.4/AndroidManifest.xml:29:5-84
+36-->[com.lzy.net:okgo:3.0.4] /Users/mac/.gradle/caches/transforms-3/b7ce8fe11ee487329b1ad3e1982d3016/transformed/jetified-okgo-3.0.4/AndroidManifest.xml:29:22-81
+37    <uses-permission android:name="android.permission.CAMERA" /> <!-- Don't require camera, as this requires a rear camera. This allows it to work on the Nexus 7 -->
+37-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:22:5-65
+37-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:22:22-62
+38    <uses-feature
+38-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:25:5-27:36
+39        android:name="android.hardware.camera"
+39-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:26:9-47
+40        android:required="false" />
+40-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:27:9-33
+41    <uses-feature
+41-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:28:5-30:36
+42        android:name="android.hardware.camera.front"
+42-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:29:9-53
+43        android:required="false" /> <!-- TODO replace above two with next line after Android 4.2 -->
+43-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:30:9-33
+44    <!-- <uses-feature android:name="android.hardware.camera.any"/> -->
+45    <uses-feature
+45-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:33:5-35:36
+46        android:name="android.hardware.camera.autofocus"
+46-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:34:9-57
+47        android:required="false" />
+47-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:35:9-33
+48    <uses-feature
+48-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:36:5-38:36
+49        android:name="android.hardware.camera.flash"
+49-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:37:9-53
+50        android:required="false" />
+50-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:38:9-33
+51    <uses-feature
+51-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:39:5-41:36
+52        android:name="android.hardware.screen.landscape"
+52-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:40:9-57
+53        android:required="false" />
+53-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:41:9-33
+54    <uses-feature
+54-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:42:5-44:36
+55        android:name="android.hardware.wifi"
+55-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:43:9-45
+56        android:required="false" />
+56-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:44:9-33
+57
+58    <application
+58-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:22:5-106:19
+59        android:allowBackup="true"
+59-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:23:9-35
+60        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+60-->[androidx.core:core:1.13.1] /Users/mac/.gradle/caches/transforms-3/b3547f5af51c9aa0fc1353ec1ad29946/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
+61        android:banner="@drawable/app_banner"
+61-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:26:9-46
+62        android:debuggable="true"
+63        android:extractNativeLibs="true"
+64        android:icon="@mipmap/ic_launcher"
+64-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:24:9-43
+65        android:label="@string/app_name"
+65-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:25:9-41
+66        android:networkSecurityConfig="@xml/network_security_config"
+66-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:30:9-69
+67        android:supportsRtl="true"
+67-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:27:9-35
+68        android:theme="@style/Theme.LeafStudioTVPlayer"
+68-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:28:9-56
+69        android:usesCleartextTraffic="true" >
+69-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:29:9-44
+70        <provider
+71            android:name="androidx.core.content.FileProvider"
+71-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:34:13-62
+72            android:authorities="com.leafstudio.tvplayer.fileprovider"
+72-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:35:13-64
+73            android:exported="false"
+73-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:36:13-37
+74            android:grantUriPermissions="true" >
+74-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:37:13-47
+75            <meta-data
+75-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:38:13-40:54
+76                android:name="android.support.FILE_PROVIDER_PATHS"
+76-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:39:17-67
+77                android:resource="@xml/file_paths" />
+77-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:40:17-51
+78        </provider>
+79
+80        <!-- AndroidAutoSize configuration for 1080p TV (960dp x 540dp) -->
+81        <meta-data
+81-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:44:9-46:34
+82            android:name="design_width_in_dp"
+82-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:45:13-46
+83            android:value="960" />
+83-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:46:13-32
+84        <meta-data
+84-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:47:9-49:34
+85            android:name="design_height_in_dp"
+85-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:48:13-47
+86            android:value="540" />
+86-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:49:13-32
+87
+88        <!-- Main launcher activity - routes to appropriate UI -->
+89        <activity
+89-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:52:9-64:20
+90            android:name="com.leafstudio.tvplayer.MainActivity"
+90-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:53:13-41
+91            android:exported="true"
+91-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:54:13-36
+92            android:screenOrientation="sensorLandscape"
+92-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:55:13-56
+93            android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" >
+93-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:56:13-83
+94            <intent-filter>
+94-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:57:13-63:29
+95                <action android:name="android.intent.action.MAIN" />
+95-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:58:17-69
+95-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:58:25-66
+96                <!-- Regular phone launcher -->
+97                <category android:name="android.intent.category.LAUNCHER" />
+97-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:60:17-77
+97-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:60:27-74
+98                <!-- TV launcher -->
+99                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+99-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:62:17-86
+99-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:62:27-83
+100            </intent-filter>
+101        </activity>
+102
+103        <!-- Phone UI Activity -->
+104        <activity
+104-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:67:9-70:63
+105            android:name="com.leafstudio.tvplayer.PhoneMainActivity"
+105-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:68:13-46
+106            android:exported="false"
+106-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:69:13-37
+107            android:theme="@style/Theme.LeafStudioTVPlayer" />
+107-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:70:13-60
+108
+109        <!-- TV UI Activity -->
+110        <activity
+110-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:73:9-76:66
+111            android:name="com.leafstudio.tvplayer.TvMainActivity"
+111-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:74:13-43
+112            android:exported="false"
+112-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:75:13-37
+113            android:theme="@style/Theme.AppCompat.NoActionBar" />
+113-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:76:13-63
+114
+115        <!-- Playback activity -->
+116        <activity
+116-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:79:9-83:66
+117            android:name="com.leafstudio.tvplayer.PlaybackActivity"
+117-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:80:13-45
+118            android:exported="false"
+118-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:81:13-37
+119            android:screenOrientation="sensorLandscape"
+119-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:82:13-56
+120            android:theme="@style/Theme.AppCompat.NoActionBar" />
+120-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:83:13-63
+121
+122        <!-- Media activity -->
+123        <activity
+123-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:86:9-90:66
+124            android:name="com.leafstudio.tvplayer.MediaActivity"
+124-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:87:13-42
+125            android:exported="false"
+125-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:88:13-37
+126            android:screenOrientation="sensorLandscape"
+126-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:89:13-56
+127            android:theme="@style/Theme.AppCompat.NoActionBar" />
+127-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:90:13-63
+128
+129        <!-- VOD Player activity -->
+130        <activity
+130-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:93:9-97:66
+131            android:name="com.leafstudio.tvplayer.VodPlayerActivity"
+131-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:94:13-46
+132            android:exported="false"
+132-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:95:13-37
+133            android:screenOrientation="sensorLandscape"
+133-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:96:13-56
+134            android:theme="@style/Theme.AppCompat.NoActionBar" />
+134-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:97:13-63
+135
+136        <!-- VOD Detail activity -->
+137        <activity
+137-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:100:9-104:66
+138            android:name="com.leafstudio.tvplayer.VodDetailActivity"
+138-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:101:13-46
+139            android:exported="false"
+139-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:102:13-37
+140            android:screenOrientation="sensorLandscape"
+140-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:103:13-56
+141            android:theme="@style/Theme.AppCompat.NoActionBar" />
+141-->/Users/mac/Desktop/LeafStudio/app/src/main/AndroidManifest.xml:104:13-63
+142        <activity
+142-->[cat.ereza:customactivityoncrash:2.4.0] /Users/mac/.gradle/caches/transforms-3/cda8864769c2e67c8388e4a1196d0805/transformed/jetified-customactivityoncrash-2.4.0/AndroidManifest.xml:10:9-12:49
+143            android:name="cat.ereza.customactivityoncrash.activity.DefaultErrorActivity"
+143-->[cat.ereza:customactivityoncrash:2.4.0] /Users/mac/.gradle/caches/transforms-3/cda8864769c2e67c8388e4a1196d0805/transformed/jetified-customactivityoncrash-2.4.0/AndroidManifest.xml:11:13-89
+144            android:process=":error_activity" />
+144-->[cat.ereza:customactivityoncrash:2.4.0] /Users/mac/.gradle/caches/transforms-3/cda8864769c2e67c8388e4a1196d0805/transformed/jetified-customactivityoncrash-2.4.0/AndroidManifest.xml:12:13-46
+145
+146        <provider
+146-->[cat.ereza:customactivityoncrash:2.4.0] /Users/mac/.gradle/caches/transforms-3/cda8864769c2e67c8388e4a1196d0805/transformed/jetified-customactivityoncrash-2.4.0/AndroidManifest.xml:14:9-18:39
+147            android:name="cat.ereza.customactivityoncrash.provider.CaocInitProvider"
+147-->[cat.ereza:customactivityoncrash:2.4.0] /Users/mac/.gradle/caches/transforms-3/cda8864769c2e67c8388e4a1196d0805/transformed/jetified-customactivityoncrash-2.4.0/AndroidManifest.xml:15:13-85
+148            android:authorities="com.leafstudio.tvplayer.customactivityoncrashinitprovider"
+148-->[cat.ereza:customactivityoncrash:2.4.0] /Users/mac/.gradle/caches/transforms-3/cda8864769c2e67c8388e4a1196d0805/transformed/jetified-customactivityoncrash-2.4.0/AndroidManifest.xml:16:13-85
+149            android:exported="false"
+149-->[cat.ereza:customactivityoncrash:2.4.0] /Users/mac/.gradle/caches/transforms-3/cda8864769c2e67c8388e4a1196d0805/transformed/jetified-customactivityoncrash-2.4.0/AndroidManifest.xml:17:13-37
+150            android:initOrder="101" />
+150-->[cat.ereza:customactivityoncrash:2.4.0] /Users/mac/.gradle/caches/transforms-3/cda8864769c2e67c8388e4a1196d0805/transformed/jetified-customactivityoncrash-2.4.0/AndroidManifest.xml:18:13-36
+151
+152        <meta-data
+152-->[com.github.bumptech.glide:okhttp3-integration:4.16.0] /Users/mac/.gradle/caches/transforms-3/2626d2085233c93f2bf5eec9f02a0d60/transformed/jetified-okhttp3-integration-4.16.0/AndroidManifest.xml:10:9-12:43
+153            android:name="com.bumptech.glide.integration.okhttp3.OkHttpGlideModule"
+153-->[com.github.bumptech.glide:okhttp3-integration:4.16.0] /Users/mac/.gradle/caches/transforms-3/2626d2085233c93f2bf5eec9f02a0d60/transformed/jetified-okhttp3-integration-4.16.0/AndroidManifest.xml:11:13-84
+154            android:value="GlideModule" />
+154-->[com.github.bumptech.glide:okhttp3-integration:4.16.0] /Users/mac/.gradle/caches/transforms-3/2626d2085233c93f2bf5eec9f02a0d60/transformed/jetified-okhttp3-integration-4.16.0/AndroidManifest.xml:12:13-40
+155
+156        <provider
+156-->[androidx.emoji2:emoji2:1.3.0] /Users/mac/.gradle/caches/transforms-3/eaa12299b47891ae93694a325129c1a3/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+157            android:name="androidx.startup.InitializationProvider"
+157-->[androidx.emoji2:emoji2:1.3.0] /Users/mac/.gradle/caches/transforms-3/eaa12299b47891ae93694a325129c1a3/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:25:13-67
+158            android:authorities="com.leafstudio.tvplayer.androidx-startup"
+158-->[androidx.emoji2:emoji2:1.3.0] /Users/mac/.gradle/caches/transforms-3/eaa12299b47891ae93694a325129c1a3/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:26:13-68
+159            android:exported="false" >
+159-->[androidx.emoji2:emoji2:1.3.0] /Users/mac/.gradle/caches/transforms-3/eaa12299b47891ae93694a325129c1a3/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:27:13-37
+160            <meta-data
+160-->[androidx.emoji2:emoji2:1.3.0] /Users/mac/.gradle/caches/transforms-3/eaa12299b47891ae93694a325129c1a3/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+161                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+161-->[androidx.emoji2:emoji2:1.3.0] /Users/mac/.gradle/caches/transforms-3/eaa12299b47891ae93694a325129c1a3/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:30:17-75
+162                android:value="androidx.startup" />
+162-->[androidx.emoji2:emoji2:1.3.0] /Users/mac/.gradle/caches/transforms-3/eaa12299b47891ae93694a325129c1a3/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:31:17-49
+163            <meta-data
+163-->[androidx.lifecycle:lifecycle-process:2.6.2] /Users/mac/.gradle/caches/transforms-3/f2c8427f0c51da91cce4cdafae00683a/transformed/jetified-lifecycle-process-2.6.2/AndroidManifest.xml:29:13-31:52
+164                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+164-->[androidx.lifecycle:lifecycle-process:2.6.2] /Users/mac/.gradle/caches/transforms-3/f2c8427f0c51da91cce4cdafae00683a/transformed/jetified-lifecycle-process-2.6.2/AndroidManifest.xml:30:17-78
+165                android:value="androidx.startup" />
+165-->[androidx.lifecycle:lifecycle-process:2.6.2] /Users/mac/.gradle/caches/transforms-3/f2c8427f0c51da91cce4cdafae00683a/transformed/jetified-lifecycle-process-2.6.2/AndroidManifest.xml:31:17-49
+166            <meta-data
+166-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
+167                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+167-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
+168                android:value="androidx.startup" />
+168-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
+169        </provider>
+170
+171        <service
+171-->[androidx.room:room-runtime:2.5.2] /Users/mac/.gradle/caches/transforms-3/2628150089d1ee63b0641e430745b32d/transformed/room-runtime-2.5.2/AndroidManifest.xml:24:9-28:63
+172            android:name="androidx.room.MultiInstanceInvalidationService"
+172-->[androidx.room:room-runtime:2.5.2] /Users/mac/.gradle/caches/transforms-3/2628150089d1ee63b0641e430745b32d/transformed/room-runtime-2.5.2/AndroidManifest.xml:25:13-74
+173            android:directBootAware="true"
+173-->[androidx.room:room-runtime:2.5.2] /Users/mac/.gradle/caches/transforms-3/2628150089d1ee63b0641e430745b32d/transformed/room-runtime-2.5.2/AndroidManifest.xml:26:13-43
+174            android:exported="false" />
+174-->[androidx.room:room-runtime:2.5.2] /Users/mac/.gradle/caches/transforms-3/2628150089d1ee63b0641e430745b32d/transformed/room-runtime-2.5.2/AndroidManifest.xml:27:13-37
+175
+176        <receiver
+176-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
+177            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+177-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
+178            android:directBootAware="false"
+178-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
+179            android:enabled="true"
+179-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
+180            android:exported="true"
+180-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
+181            android:permission="android.permission.DUMP" >
+181-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+182            <intent-filter>
+182-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
+183                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+183-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
+183-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+184            </intent-filter>
+185            <intent-filter>
+185-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
+186                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+186-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
+186-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
+187            </intent-filter>
+188            <intent-filter>
+188-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
+189                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+189-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
+189-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
+190            </intent-filter>
+191            <intent-filter>
+191-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
+192                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+192-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
+192-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/mac/.gradle/caches/transforms-3/618293b988a94b2ad64fc8615e872ffd/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
+193            </intent-filter>
+194        </receiver>
+195
+196        <activity
+196-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:47:9-53:63
+197            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+197-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:48:13-74
+198            android:clearTaskOnLaunch="true"
+198-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:49:13-45
+199            android:screenOrientation="sensorLandscape"
+199-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:50:13-56
+200            android:stateNotNeeded="true"
+200-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:51:13-42
+201            android:theme="@style/zxing_CaptureTheme"
+201-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:52:13-54
+202            android:windowSoftInputMode="stateAlwaysHidden" />
+202-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/mac/.gradle/caches/transforms-3/1f823ec865dd8e002af08c73c472d87d/transformed/jetified-zxing-android-embedded-4.3.0/AndroidManifest.xml:53:13-60
+203    </application>
+204
+205</manifest>

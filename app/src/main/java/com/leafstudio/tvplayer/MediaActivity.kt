@@ -24,6 +24,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
+import com.leafstudio.tvplayer.utils.loadUrl
 
 /**
  * 多媒体 Activity - 仿 TVBox 界面
@@ -43,6 +44,8 @@ class MediaActivity : FragmentActivity() {
         .readTimeout(15, TimeUnit.SECONDS)
         .build()
         
+    private var pendingSearchKeyword: String? = null
+        
     private val configUrl = "https://yezheng.dpdns.org/tv/tvbox_2026.json"
     
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,7 +61,26 @@ class MediaActivity : FragmentActivity() {
                 or View.SYSTEM_UI_FLAG_FULLSCREEN)
         
         setupViews()
+        
+        // 检查是否有搜索请求
+        pendingSearchKeyword = intent.getStringExtra("search_keyword")
+        
         loadConfig()
+    }
+    
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val keyword = intent?.getStringExtra("search_keyword")
+        if (!keyword.isNullOrEmpty()) {
+            if (config != null) {
+                performSearch(keyword)
+            } else {
+                pendingSearchKeyword = keyword
+                // Config not loaded yet? loadConfig is already running, it will pick it up.
+                // Or if failed, user might need to retry manually.
+            }
+        }
     }
     
     override fun onResume() {
@@ -87,9 +109,61 @@ class MediaActivity : FragmentActivity() {
             showSourceDialog()
         }
         
-        // 搜索按钮
+        // 搜索功能 (支持首字母联想)
+        val llSearchBar = findViewById<View>(R.id.ll_search_bar)
+        val etSearchInput = findViewById<EditText>(R.id.et_search_input)
+        val btnClear = findViewById<View>(R.id.btn_clear_search)
+        
         findViewById<View>(R.id.btn_search).setOnClickListener {
-            showSearchDialog()
+            if (llSearchBar.visibility == View.VISIBLE) {
+                llSearchBar.visibility = View.GONE
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                imm.hideSoftInputFromWindow(etSearchInput.windowToken, 0)
+            } else {
+                llSearchBar.visibility = View.VISIBLE
+                etSearchInput.requestFocus()
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                imm.showSoftInput(etSearchInput, 0)
+            }
+        }
+        
+        btnClear.setOnClickListener {
+            etSearchInput.setText("")
+        }
+
+        etSearchInput.addTextChangedListener(object : android.text.TextWatcher {
+            private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+            private var lastRunnable: Runnable? = null
+            
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val keyword = s?.toString()?.trim() ?: ""
+                
+                lastRunnable?.let { handler.removeCallbacks(it) }
+                if (keyword.isNotEmpty()) {
+                    val runnable = Runnable {
+                        performSearch(keyword)
+                    }
+                    lastRunnable = runnable
+                    handler.postDelayed(runnable, 1200) // 1.2秒延迟，避免输入过快频繁请求
+                }
+            }
+        })
+        
+        etSearchInput.setOnEditorActionListener { v, actionId, event ->
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
+                val keyword = v.text.toString().trim()
+                if (keyword.isNotEmpty()) {
+                    performSearch(keyword)
+                }
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                imm.hideSoftInputFromWindow(v.windowToken, 0)
+                true
+            } else {
+                false
+            }
         }
         
         // 历史按钮
@@ -145,16 +219,7 @@ class MediaActivity : FragmentActivity() {
         }
         
         // 尝试恢复上次选择的源
-        val lastSiteKey = getLastSelectedSite()
-        if (lastSiteKey != null) {
-            val lastSite = config?.sites?.find { it.key == lastSiteKey }
-            if (lastSite != null) {
-                // Wait for layout/data (?) or just select it
-                // We are in setupViews, config might be null yet. 
-                // Wait, setupViews is called BEFORE loadConfig. So config IS null here.
-                // We should do restoration in loadConfig, not here.
-            }
-        }
+        // (逻辑移至 loadConfig)
     }
     
     private fun loadConfig() {
@@ -175,11 +240,15 @@ class MediaActivity : FragmentActivity() {
                     val sites = parseSites(jsonObject)
                     val lives = parseLives(jsonObject)
                     val spider = resolveUrl(jsonObject.optString("spider"))
+                    val wallpaper = resolveUrl(jsonObject.optString("wallpaper"))
                     
-                    config = TvBoxConfig(spider, sites, lives)
+                    config = TvBoxConfig(spider, wallpaper, sites, lives)
                     
                     runOnUiThread {
                         showLoading(false)
+                        // 应用壁纸
+                        applyWallpaper(wallpaper)
+                        
                         sourceAdapter.updateSources(sites.map { it.name })
                         
                         // 尝试恢复上次选择的源
@@ -188,7 +257,8 @@ class MediaActivity : FragmentActivity() {
                             sites.find { it.key == lastSiteKey }
                         } else null
                         
-                        if (lastSite != null) {
+                        // ... (rest of the logic)
+                         if (lastSite != null) {
                             android.util.Log.d("MediaActivity", "恢复上次选择的源: ${lastSite.name}")
                             onSiteSelected(lastSite)
                         } else {
@@ -201,6 +271,12 @@ class MediaActivity : FragmentActivity() {
                             } else {
                                 showError("没有可用的源")
                             }
+                        }
+                        
+                        // 处理挂起的搜索请求
+                        if (pendingSearchKeyword != null) {
+                            performSearch(pendingSearchKeyword!!)
+                            pendingSearchKeyword = null
                         }
                     }
                 }
@@ -689,6 +765,13 @@ class MediaActivity : FragmentActivity() {
         }
     }
     
+    // Restore default click listener for normal browsing
+    private fun restoreDefaultCategoryListener() {
+        categoryAdapter.setOnCategoryClickListener { category ->
+            loadContent(category)
+        }
+    }
+    
     private fun showSourceDialog() {
         val sites = config?.sites ?: return
         if (sites.isEmpty()) {
@@ -722,77 +805,174 @@ class MediaActivity : FragmentActivity() {
             .show()
     }
     
+    private val searchGeneration = java.util.concurrent.atomic.AtomicLong(0)
+
     private fun performSearch(keyword: String) {
-        val sites = config?.sites?.filter { it.searchable == 1 && (it.type == 0 || it.type == 1) } ?: return
-        
+        val sites = config?.sites?.filter { it.searchable == 1 } ?: return
         if (sites.isEmpty()) {
             showError("没有可搜索的源")
             return
         }
         
-        // 清除 Spider，防止干扰 CMS 搜索结果的播放逻辑
+        // 增加搜索代数，标记旧搜索无效
+        val currentGen = searchGeneration.incrementAndGet()
+        
+        // 清除 Spider，防止干扰
         com.leafstudio.tvplayer.spider.SpiderManager.currentSpider = null
 
-        // Update title
+        // Update UI
         findViewById<TextView>(R.id.tv_current_source).text = "搜索: $keyword"
-        
-        // Clear categories
-        categoryAdapter.updateCategories(emptyList())
-        
         showLoading(true)
         
-        Thread {
-            val allResults = mutableListOf<Vod>()
-            
-            for (site in sites) {
+        // 准备结果容器
+        val searchResults = java.util.concurrent.ConcurrentHashMap<String, List<Vod>>()
+        val searchSources = java.util.concurrent.CopyOnWriteArrayList<String>()
+        searchSources.add("全部")
+        
+        // 更新分类栏为“全部”
+        categoryAdapter.updateCategories(listOf(Category("all", "全部")))
+        contentAdapter.updateContent(emptyList())
+        
+        // 定义点击源时的过滤逻辑
+        categoryAdapter.setOnCategoryClickListener { category ->
+            val sourceName = category.type_name
+            if (sourceName == "全部") {
+                val allVods = searchResults.values.flatten().distinctBy { it.vod_id + it.vod_name }
+                contentAdapter.updateContent(allVods)
+            } else {
+                val vods = searchResults[sourceName] ?: emptyList()
+                contentAdapter.updateContent(vods)
+            }
+        }
+        
+        // 使用线程池并发搜索
+        val executor = java.util.concurrent.Executors.newFixedThreadPool(5) // 限制并发数
+        val params = java.util.concurrent.atomic.AtomicInteger(0)
+        val total = sites.size
+        
+        for (site in sites) {
+            executor.submit {
+                // 如果已开启新搜索，提前结束
+                if (currentGen != searchGeneration.get()) return@submit
+
                 try {
-                    // CMS API: ?ac=detail&wd=KEYWORD
-                    var apiUrl = site.api.replace("/at/xml/", "/at/json/", ignoreCase = true)
-                    val url = if (apiUrl.contains("?")) "${apiUrl}&ac=detail&wd=$keyword" else "${apiUrl}?ac=detail&wd=$keyword"
+                    val results = mutableListOf<Vod>()
                     
-                    val request = Request.Builder().url(url).build()
-                    val response = client.newCall(request).execute()
-                    val jsonStr = response.body?.string()
-                    
-                    if (jsonStr != null) {
-                        val jsonObject = JSONObject(jsonStr)
-                        val listArray = jsonObject.optJSONArray("list")
-                        
-                        if (listArray != null) {
-                            for (i in 0 until listArray.length()) {
-                                val item = listArray.getJSONObject(i)
-                                allResults.add(Vod(
-                                    vod_id = item.optString("vod_id"),
-                                    vod_name = item.optString("vod_name"),
-                                    vod_pic = item.optString("vod_pic"),
-                                    vod_remarks = item.optString("vod_remarks"),
-                                    vod_play_url = item.optString("vod_play_url"),
-                                    vod_year = item.optString("vod_year"),
-                                    vod_area = item.optString("vod_area"),
-                                    vod_director = item.optString("vod_director"),
-                                    vod_actor = item.optString("vod_actor"),
-                                    vod_content = item.optString("vod_content").ifEmpty { item.optString("des") },
-                                    vod_tag = "${site.name}@@@${site.playUrl ?: ""}"
-                                ))
+                    if (site.type == 3) {
+                         // Spider 搜索
+                         try {
+                               // ... (Spider logic same as before)
+                             val spiderKey = site.key
+                             val jarUrl = if (!site.jar.isNullOrEmpty()) site.jar else config?.spider ?: ""
+                             val spider = if (jarUrl.isNotEmpty()) {
+                                 com.leafstudio.tvplayer.spider.JarSpider(this, jarUrl, site.api, spiderKey).apply { init(site.ext ?: "") }
+                             } else {
+                                 com.leafstudio.tvplayer.spider.JsSpider(this, site.api).apply { init(site.ext ?: "") }
+                             }
+                             
+                             val jsonStr = spider.search(keyword, true)
+                             if (jsonStr.isNotEmpty()) {
+                                 val jsonObject = JSONObject(jsonStr)
+                                 val listArray = jsonObject.optJSONArray("list")
+                                 if (listArray != null) {
+                                     for (i in 0 until listArray.length()) {
+                                         val item = listArray.getJSONObject(i)
+                                         results.add(Vod(
+                                             vod_id = item.optString("vod_id"),
+                                             vod_name = item.optString("vod_name"),
+                                             vod_pic = item.optString("vod_pic"),
+                                             vod_play_url = item.optString("vod_play_url"),
+                                             vod_remarks = item.optString("vod_remarks"),
+                                             vod_tag = "${site.name}@@@${site.playUrl ?: ""}"
+                                         ))
+                                     }
+                                 }
+                             }
+                         } catch (e: Exception) {
+                             e.printStackTrace()
+                         }
+                    } else {
+                        // CMS 搜索
+                        try {
+                            var apiUrl = site.api.replace("/at/xml/", "/at/json/", ignoreCase = true)
+                            // 修正: 增加 pg=1 并对 keyword 编码 (虽英文不需要，但为了健壮性)
+                            val encodedKw = java.net.URLEncoder.encode(keyword, "UTF-8")
+                            val url = if (apiUrl.contains("?")) "${apiUrl}&ac=detail&wd=$encodedKw&pg=1" else "${apiUrl}?ac=detail&wd=$encodedKw&pg=1"
+                            
+                            val request = Request.Builder().url(url).build()
+                            val response = client.newCall(request).execute()
+                            val jsonStr = response.body?.string()
+                            
+                            if (jsonStr != null) {
+                                val jsonObject = JSONObject(jsonStr)
+                                val listArray = jsonObject.optJSONArray("list")
+                                if (listArray != null) {
+                                    for (i in 0 until listArray.length()) {
+                                        val item = listArray.getJSONObject(i)
+                                        results.add(Vod(
+                                            vod_id = item.optString("vod_id"),
+                                            vod_name = item.optString("vod_name"),
+                                            vod_pic = item.optString("vod_pic"),
+                                            vod_remarks = item.optString("vod_remarks"),
+                                            vod_play_url = item.optString("vod_play_url"),
+                                            vod_tag = "${site.name}@@@${site.playUrl ?: ""}"
+                                        ))
+                                    }
+                                }
                             }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
+                    }
+                    
+                    // 再次检查 generation
+                    if (currentGen != searchGeneration.get()) return@submit
+                    
+                    if (results.isNotEmpty()) {
+                         searchResults[site.name] = results
+                         searchSources.add(site.name)
+                         
+                         runOnUiThread {
+                             // 再次检查 generation (UI thread)
+                             if (currentGen != searchGeneration.get()) return@runOnUiThread
+
+                             // 更新顶部分类栏（源列表）
+                             val categories = searchSources.map { 
+                                 val count = if (it == "全部") "" else "(${searchResults[it]?.size})"
+                                 Category(it, "$it$count") 
+                             }
+                             categoryAdapter.updateCategories(categories)
+                             
+                             // 刷新内容
+                             if (contentAdapter.itemCount == 0 || categoryAdapter.getSelectedCategory()?.type_name == "全部") {
+                                 val allVods = searchResults.values.flatten().distinctBy { it.vod_id + it.vod_name }
+                                 contentAdapter.updateContent(allVods)
+                             }
+                         }
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    // Continue to next source
+                } finally {
+                    if (params.incrementAndGet() == total) {
+                        runOnUiThread {
+                             if (currentGen == searchGeneration.get()) {
+                                showLoading(false)
+                                if (searchResults.isEmpty()) {
+                                    // 不要用 showError，因为会覆盖列表，用 Toast 即可
+                                    // 而且在 Live Search 时，如果还在输入，弹 Error 可能会闪烁
+                                    // 仅当不再输入时显示
+                                    Toast.makeText(this@MediaActivity, "未找到内容", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    // Toast.makeText(this@MediaActivity, "搜索完成", Toast.LENGTH_SHORT).show()
+                                }
+                             }
+                        }
+                    }
                 }
             }
-            
-            runOnUiThread {
-                showLoading(false)
-                if (allResults.isEmpty()) {
-                    showError("未找到相关内容")
-                } else {
-                    contentAdapter.updateContent(allResults)
-                    Toast.makeText(this, "找到 ${allResults.size} 个结果", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }.start()
+        }
+        
+        executor.shutdown()
     }
     
     private fun showLoading(show: Boolean) {
@@ -805,5 +985,26 @@ class MediaActivity : FragmentActivity() {
             text = message
             visibility = View.VISIBLE
         }
+    }
+
+
+
+
+    private fun applyWallpaper(url: String?) {
+        val ivWallpaper = findViewById<android.widget.ImageView>(R.id.iv_wallpaper) ?: return
+        if (!url.isNullOrEmpty()) {
+             // 保存原始 URL
+             wallpaperUrl = url
+             
+             // 添加随机参数以强制刷新（绕过缓存）
+             val delimiter = if (url.contains("?")) "&" else "?"
+             val finalUrl = "$url${delimiter}t=${System.currentTimeMillis()}"
+             
+             ivWallpaper.loadUrl(finalUrl)
+        }
+    }
+
+    companion object {
+        var wallpaperUrl: String? = null
     }
 }

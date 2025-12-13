@@ -4,9 +4,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
+import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import android.net.ConnectivityManager
+import android.net.Network
+import android.content.Context
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
@@ -27,6 +31,10 @@ class MainActivity : FragmentActivity() {
     private lateinit var backgroundImage: ImageView
     private lateinit var progressBar: ProgressBar
     private lateinit var loadingText: TextView
+    private lateinit var btnRetry: Button
+    
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private var isNetworkLost = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +44,14 @@ class MainActivity : FragmentActivity() {
         backgroundImage = findViewById(R.id.iv_splash_background)
         progressBar = findViewById(R.id.progress_loading)
         loadingText = findViewById(R.id.tv_loading_text)
+        btnRetry = findViewById(R.id.btn_retry)
+        
+        btnRetry.setOnClickListener {
+            retryLoading()
+        }
+        
+        // 注册网络监听
+        registerNetworkCallback()
         
         // 设置全屏模式
         window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
@@ -52,13 +68,55 @@ class MainActivity : FragmentActivity() {
         loadPlaylistAndPlay()
     }
     
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterNetworkCallback()
+    }
+    
+    private fun registerNetworkCallback() {
+        try {
+            val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            networkCallback = object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    runOnUiThread {
+                        if (btnRetry.visibility == View.VISIBLE) {
+                            retryLoading()
+                        }
+                    }
+                }
+            }
+            connectivityManager.registerDefaultNetworkCallback(networkCallback!!)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    
+    private fun unregisterNetworkCallback() {
+        try {
+            networkCallback?.let {
+                val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                connectivityManager.unregisterNetworkCallback(it)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    
+    private fun retryLoading() {
+        btnRetry.visibility = View.GONE
+        progressBar.visibility = View.VISIBLE
+        loadingText.text = "正在重试..."
+        loadPlaylistAndPlay()
+    }
+    
     /**
      * 加载背景图片
      */
     private fun loadBackgroundImage() {
         try {
+            // 使用用户指定的背景图接口
             Glide.with(this)
-                .load("http://api.btstu.cn/sjbz/")
+                .load("https://api.btstu.cn/sjbz/?lx=meizi")
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .skipMemoryCache(true)
                 .into(backgroundImage)
@@ -123,13 +181,16 @@ class MainActivity : FragmentActivity() {
                 
             } catch (e: Exception) {
                 e.printStackTrace()
-                loadingText.text = "加载失败"
+                loadingText.text = "加载失败，请检查网络"
+                progressBar.visibility = View.GONE
+                btnRetry.visibility = View.VISIBLE
+                
                 Toast.makeText(
                     this@MainActivity,
                     getString(R.string.error_loading_playlist) + ": ${e.message}",
                     Toast.LENGTH_LONG
                 ).show()
-                finish()
+                // 不要 finish()，允许用户重试
             }
         }
     }

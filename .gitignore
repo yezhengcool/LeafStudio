@@ -25,6 +25,8 @@ server/config.php
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
+/app/build
+build/
 /captures
 .externalNativeBuild
 .cxx

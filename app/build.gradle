@@ -6,29 +6,45 @@ plugins {
 
 android {
     namespace 'com.leafstudio.tvplayer'
-    compileSdk 34
+
+    compileSdk = 36
 
     defaultConfig {
         applicationId "com.leafstudio.tvplayer"
         minSdk 21
-        targetSdk 34
-        versionCode 19
-        versionName "2.1.7"
-        multiDexEnabled true
-        
-        ndk {
-            // 指定支持的 ABI，确保包含 IJKPlayer 的所有架构库
-            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        //noinspection ExpiredTargetSdkVersion
+        targetSdk 28
+        versionCode 476
+        versionName "4.7.6"
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = ["room.schemaLocation": "$projectDir/schemas".toString(), "eventBusIndex": "com.leafstudio.tvplayer.event.EventIndex"]
+            }
         }
     }
 
-    signingConfigs {
-        release {
-            storeFile file('../leafstudio.keystore')
-            storePassword 'android123'
-            keyAlias 'leafstudio'
-            keyPassword 'android123'
+    flavorDimensions = ["mode", "abi"]
+
+    productFlavors {
+        leanback {
+            dimension "mode"
         }
+        mobile {
+            dimension "mode"
+        }
+        arm64_v8a {
+            dimension "abi"
+            ndk { abiFilters "arm64-v8a" }
+        }
+        armeabi_v7a {
+            dimension "abi"
+            ndk { abiFilters "armeabi-v7a" }
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+        viewBinding true
     }
 
     buildTypes {
@@ -36,69 +52,120 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
         }
     }
-    
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging true
+        }
+        resources {
+            exclude 'META-INF/beans.xml'
+            exclude 'META-INF/versions/9/OSGI-INF/MANIFEST.MF'
+        }
+    }
+
+    android.applicationVariants.configureEach { variant ->
+        variant.outputs.configureEach { output ->
+            outputFileName = "${variant.productFlavors[0].name}-${variant.productFlavors[1].name}.apk"
+        }
+    }
+
+    configurations.configureEach {
+        resolutionStrategy {
+            force 'com.squareup.okhttp3:okhttp:' + okhttpVersion
+            force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.20'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.20'
+        }
+    }
+
+    lint {
+        disable 'UnsafeOptInUsageError'
+    }
+
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
-    
+
     kotlinOptions {
-        jvmTarget = '1.8'
-    }
-    
-    buildFeatures {
-        viewBinding true
+        jvmTarget = '17'
     }
 }
 
 dependencies {
-    // AndroidX Core
-    implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation fileTree(dir: "libs", include: ["*.aar"])
+    // 以下模块在当前项目中不存在，已注释
+    // implementation project(':catvod')
+    // implementation project(':chaquo')
+    // implementation project(':quickjs')
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'androidx.core:core-splashscreen:1.0.1'
+    implementation 'androidx.media:media:1.7.1'
+    implementation 'androidx.media3:media3-common:' + media3Version
+    implementation 'androidx.media3:media3-container:' + media3Version
+    implementation 'androidx.media3:media3-database:' + media3Version
+    implementation 'androidx.media3:media3-datasource:' + media3Version
+    implementation 'androidx.media3:media3-datasource-okhttp:' + media3Version
+    implementation 'androidx.media3:media3-datasource-rtmp:' + media3Version
+    implementation 'androidx.media3:media3-decoder:' + media3Version
+    implementation 'androidx.media3:media3-effect:' + media3Version
+    implementation 'androidx.media3:media3-exoplayer:' + media3Version
+    implementation 'androidx.media3:media3-exoplayer-dash:' + media3Version
+    implementation 'androidx.media3:media3-exoplayer-hls:' + media3Version
+    implementation 'androidx.media3:media3-exoplayer-rtsp:' + media3Version
+    implementation 'androidx.media3:media3-exoplayer-smoothstreaming:' + media3Version
+    implementation 'androidx.media3:media3-extractor:' + media3Version
+    implementation 'androidx.media3:media3-ui:' + media3Version
+    implementation 'androidx.palette:palette:1.0.0'
+    implementation 'androidx.room:room-runtime:2.5.2'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'cat.ereza:customactivityoncrash:2.4.0'
+    implementation 'com.airbnb.android:lottie:6.7.1'
+    implementation 'com.github.bassaer:materialdesigncolors:1.0.0'
+    implementation 'com.github.bumptech.glide:glide:' + glideVersion
+    implementation 'com.github.bumptech.glide:annotations:' + glideVersion
+    implementation 'com.github.bumptech.glide:avif-integration:' + glideVersion
+    implementation 'com.github.bumptech.glide:okhttp3-integration:' + glideVersion
+    implementation 'com.github.jahirfiquitiva:TextDrawable:1.0.3'
+    implementation 'com.github.teamnewpipe:NewPipeExtractor:v0.24.8'
+    implementation 'com.google.android.material:material:1.13.0'
+    implementation 'com.guolindev.permissionx:permissionx:1.8.1'
+    implementation 'io.antmedia:rtmp-client:3.2.0'
+    implementation 'javax.servlet:javax.servlet-api:3.1.0'
+    implementation 'org.eclipse.jetty:jetty-client:8.1.21.v20160908'
+    implementation('org.eclipse.jetty:jetty-server:8.1.21.v20160908') { exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet' }
+    implementation('org.eclipse.jetty:jetty-servlet:8.1.21.v20160908') { exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet' }
+    // Cling库（DLNA/UPnP）在Maven仓库中不可用，已注释
+    // implementation 'org.fourthline.cling:cling-core:2.1.1'
+    // implementation 'org.fourthline.cling:cling-support:2.1.1'
+    implementation 'org.greenrobot:eventbus:3.3.1'
+    implementation 'org.nanohttpd:nanohttpd:2.3.1'
+    implementation('org.simpleframework:simple-xml:2.7.1') { exclude group: 'stax', module: 'stax-api' exclude group: 'xpp3', module: 'xpp3' }
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.29'
+    implementation 'org.jsoup:jsoup:1.17.2'
+    implementation 'com.alibaba:fastjson:1.1.72.android'
+    implementation 'com.lzy.net:okgo:3.0.4'
     
-    // Leanback for Android TV
-    implementation 'androidx.leanback:leanback:1.0.0'
+    // VLC Player
+    implementation 'org.videolan.android:libvlc-all:3.6.0-eap5'
     
-    // ExoPlayer for video playback - comprehensive protocol support
-    implementation 'androidx.media3:media3-exoplayer:1.2.1'
-    implementation 'androidx.media3:media3-exoplayer-dash:1.2.1'      // DASH support
-    implementation 'androidx.media3:media3-exoplayer-hls:1.2.1'       // HLS support
-    implementation 'androidx.media3:media3-exoplayer-rtsp:1.2.1'      // RTSP support
-    implementation 'androidx.media3:media3-exoplayer-smoothstreaming:1.2.1' // SmoothStreaming
-    implementation 'androidx.media3:media3-datasource-rtmp:1.2.1'     // RTMP support
-    implementation 'androidx.media3:media3-ui:1.2.1'
-    implementation 'androidx.media3:media3-common:1.2.1'             // 通用组件
-    implementation 'androidx.media3:media3-session:1.2.1'             // 音频会话支持
-    
-    // RTMP扩展支持（需要rtmp library）
-    implementation 'ar.com.hjg:pngj:2.1.0'
-    
-    // IJKPlayer - alternative player with hardware/software decoding
-    // 从 Maven 仓库自动下载(使用阿里云镜像加速)
+    // IJKPlayer
     implementation 'tv.danmaku.ijk.media:ijkplayer-java:0.8.8'
     implementation 'tv.danmaku.ijk.media:ijkplayer-armv7a:0.8.8'
     implementation 'tv.danmaku.ijk.media:ijkplayer-arm64:0.8.8'
-    
-    // libVLC - VLC media player library (更稳定的软解方案)
-    implementation 'org.videolan.android:libvlc-all:3.4.0'
-    
-    // Networking
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
-    
-    // Lifecycle
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2'
-    
-    // Glide for image loading
-    implementation 'com.github.bumptech.glide:glide:4.16.0'
-    
-    // ZXing for QR code generation
-    implementation 'com.google.zxing:core:3.5.2'
+    implementation 'app.cash.quickjs:quickjs-android:0.9.2' // JS 引擎用于 Spider
+    leanbackImplementation 'androidx.leanback:leanback:1.0.0'
+    leanbackImplementation 'com.github.JessYanCoding:AndroidAutoSize:1.2.1'
+    leanbackImplementation 'com.google.android.flexbox:flexbox:3.0.0'
+    mobileImplementation 'androidx.biometric:biometric:1.1.0'
+    mobileImplementation 'com.google.android.flexbox:flexbox:3.0.0'
+    mobileImplementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+    mobileImplementation 'com.google.zxing:core:3.5.1'
+    annotationProcessor 'androidx.room:room-compiler:2.5.2'
+    annotationProcessor 'com.github.bumptech.glide:compiler:' + glideVersion
+    annotationProcessor 'org.greenrobot:eventbus-annotation-processor:3.3.1'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs_nio:2.1.5'
 }

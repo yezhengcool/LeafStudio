@@ -106,10 +106,49 @@ object UpdateManager {
 
     private fun showUpdateDialog(context: Context, updateInfo: UpdateInfo) {
         try {
+            // 检查用户是否选择了"下次不再弹出"
+            val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            val skipUpdate = prefs.getBoolean("skip_update_prompt", false)
+            
+            // 如果用户之前选择了不再弹出且不是强制更新，则跳过
+            if (skipUpdate && !updateInfo.forceUpdate) {
+                return
+            }
+            
+            // 创建自定义布局
+            val dialogView = android.view.LayoutInflater.from(context).inflate(
+                android.R.layout.select_dialog_multichoice, null
+            )
+            val checkBox = android.widget.CheckBox(context)
+            checkBox.text = "下次不再弹出"
+            checkBox.setTextColor(android.graphics.Color.WHITE)
+            checkBox.setPadding(50, 20, 50, 20)
+            
+            // 创建包含消息和复选框的布局
+            val layout = android.widget.LinearLayout(context)
+            layout.orientation = android.widget.LinearLayout.VERTICAL
+            layout.setPadding(50, 30, 50, 10)
+            
+            val messageView = android.widget.TextView(context)
+            messageView.text = updateInfo.description
+            messageView.setTextColor(android.graphics.Color.WHITE)
+            messageView.textSize = 16f
+            
+            layout.addView(messageView)
+            
+            // 只在非强制更新时显示复选框
+            if (!updateInfo.forceUpdate) {
+                layout.addView(checkBox)
+            }
+            
             val builder = AlertDialog.Builder(context)
                 .setTitle("发现新版本: ${updateInfo.versionName}")
-                .setMessage(updateInfo.description)
+                .setView(layout)
                 .setPositiveButton("立即更新") { _, _ ->
+                    // 保存用户选择
+                    if (!updateInfo.forceUpdate && checkBox.isChecked) {
+                        prefs.edit().putBoolean("skip_update_prompt", true).apply()
+                    }
                     downloadApk(context, updateInfo.downloadUrl)
                 }
             
@@ -117,6 +156,10 @@ object UpdateManager {
                 builder.setCancelable(false)
             } else {
                 builder.setNegativeButton("稍后") { dialog, _ ->
+                    // 保存用户选择
+                    if (checkBox.isChecked) {
+                        prefs.edit().putBoolean("skip_update_prompt", true).apply()
+                    }
                     dialog.dismiss()
                 }
                 builder.setCancelable(true)

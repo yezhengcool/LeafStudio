@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Leanback theme for TV -->
+    <style name="Theme.Leanback" parent="Theme.Leanback.Browse">
+        <item name="android:windowBackground">@color/lb_background</item>
+        <item name="android:colorPrimary">@color/purple_500</item>
+        <item name="browsePaddingStart">64dp</item>
+        <item name="browsePaddingEnd">64dp</item>
+        <item name="browsePaddingTop">32dp</item>
+        <item name="browsePaddingBottom">32dp</item>
+    </style>
+</resources>

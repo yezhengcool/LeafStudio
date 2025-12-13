@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/dialog_background">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="选择解码器"
+        android:textColor="@android:color/white"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:paddingBottom="16dp"/>
+
+    <RadioGroup
+        android:id="@+id/decoder_radio_group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <RadioButton
+            android:id="@+id/radio_exoplayer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ExoPlayer（系统解码）"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:checked="true"/>
+
+        <RadioButton
+            android:id="@+id/radio_ijk_hw"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="IJKPlayer 硬解"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:padding="12dp"/>
+
+        <RadioButton
+            android:id="@+id/radio_ijk_sw"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="IJKPlayer 软解"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:padding="12dp"/>
+
+    </RadioGroup>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="提示：ExoPlayer 支持更多协议，IJKPlayer 兼容性更好"
+        android:textColor="#AAAAAA"
+        android:textSize="12sp"
+        android:paddingTop="8dp"/>
+
+</LinearLayout>
+

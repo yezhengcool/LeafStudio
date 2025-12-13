@@ -40,6 +40,14 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- AndroidAutoSize configuration for 1080p TV (960dp x 540dp) -->
+        <meta-data
+            android:name="design_width_in_dp"
+            android:value="960"/>
+        <meta-data
+            android:name="design_height_in_dp"
+            android:value="540"/>
+
         <!-- Main launcher activity - routes to appropriate UI -->
         <activity
             android:name=".MainActivity"
@@ -65,7 +73,7 @@
         <activity
             android:name=".TvMainActivity"
             android:exported="false"
-            android:theme="@style/Theme.Leanback" />
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
 
         <!-- Playback activity -->
         <activity
@@ -77,6 +85,20 @@
         <!-- Media activity -->
         <activity
             android:name=".MediaActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+
+        <!-- VOD Player activity -->
+        <activity
+            android:name=".VodPlayerActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+
+        <!-- VOD Detail activity -->
+        <activity
+            android:name=".VodDetailActivity"
             android:exported="false"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />

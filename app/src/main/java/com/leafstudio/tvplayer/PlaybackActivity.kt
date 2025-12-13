@@ -46,6 +46,8 @@ class PlaybackActivity : AppCompatActivity() {
     // 侧边栏
     private var channelSidebarAdapter: ChannelSidebarAdapter? = null
     private var routeSidebarAdapter: RouteSidebarAdapter? = null
+    private var groupListAdapter: com.leafstudio.tvplayer.ui.GroupListAdapter? = null
+    private var channelGroups: List<String> = emptyList()
     private var isChannelSidebarVisible = false
     private var isRouteSidebarVisible = false
     
@@ -89,6 +91,10 @@ class PlaybackActivity : AppCompatActivity() {
     private var currentDecoderType = 0 // 0=ExoPlayer(系统), 1=IJK硬解, 2=VLC软解
     private var decoderRetryCount = 0 // 当前URL解码器重试次数
     
+    // 视频源尺寸（用于 IJK/VLC 画面比例计算）
+    private var currentVideoWidth = 0
+    private var currentVideoHeight = 0
+    
     companion object {
         const val EXTRA_ALL_CHANNELS = "all_channels"
         const val EXTRA_CURRENT_CHANNEL_INDEX = "current_channel_index"
@@ -100,14 +106,84 @@ class PlaybackActivity : AppCompatActivity() {
         const val EXTRA_CURRENT_ROUTE_INDEX = "current_route_index"
     }
     
+    // 网络状态监听
+    private var networkCallback: android.net.ConnectivityManager.NetworkCallback? = null
+    private var isNetworkLost = false
+    
+    // 广播接收器：用于接收来自 MediaActivity 的暂停/恢复指令
+    private val playbackControlReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+            when (intent?.action) {
+                "com.leafstudio.tvplayer.PAUSE_PLAYBACK" -> {
+                    // 停止播放并释放资源
+                    try {
+                        android.util.Log.d("PlaybackActivity", "收到暂停广播，释放播放器资源")
+                        
+                        // ExoPlayer: 停止并释放
+                        player?.stop()
+                        player?.release()
+                        player = null
+                        
+                        // IJKPlayer: 停止并释放
+                        ijkMediaPlayer?.let {
+                            try {
+                                val stopMethod = it.javaClass.getMethod("stop")
+                                stopMethod.invoke(it)
+                                val releaseMethod = it.javaClass.getMethod("release")
+                                releaseMethod.invoke(it)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                        ijkMediaPlayer = null
+                        
+                        // VLC: 停止并释放（但保留 libVLC 实例）
+                        vlcMediaPlayer?.stop()
+                        vlcMediaPlayer?.release()
+                        vlcMediaPlayer = null
+                        
+                        // 隐藏视频视图
+                        binding.playerView.visibility = View.GONE
+                        binding.flIjkContainer.visibility = View.GONE
+                        
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                "com.leafstudio.tvplayer.RESUME_PLAYBACK" -> {
+                    // 重新初始化播放器并开始播放
+                    try {
+                        android.util.Log.d("PlaybackActivity", "收到恢复广播，重新初始化播放器")
+                        if (allChannels != null && allChannels!!.isNotEmpty()) {
+                            initializePlayer()
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityPlaybackBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
+        // 注册广播接收器
+        val filter = android.content.IntentFilter().apply {
+            addAction("com.leafstudio.tvplayer.PAUSE_PLAYBACK")
+            addAction("com.leafstudio.tvplayer.RESUME_PLAYBACK")
+        }
+        registerReceiver(playbackControlReceiver, filter)
+        
+        // 注册网络监听
+        registerNetworkCallback()
+        
         // 立即初始化解码器按钮文本，避免显示默认值
         val prefs = getSharedPreferences("settings", MODE_PRIVATE)
-        currentDecoderType = prefs.getInt("decoder", 0)
+        // 默认使用系统解码 (0=ExoPlayer)，换台速度快、HLS性能最佳
+        currentDecoderType = prefs.getInt("decoder_type", 0)
         updateDecoderButtonText()
         
         // 设置全局异常捕获，帮助排查闪退问题
@@ -117,35 +193,132 @@ class PlaybackActivity : AppCompatActivity() {
         }
         
         // 检查激活状态 - 必须通过API，以便数据同步到管理后台
+        checkActivationAndInit()
+    }
+    
+    private fun checkActivationAndInit() {
         lifecycleScope.launch {
-            val info = com.leafstudio.tvplayer.utils.ActivationManager.checkActivationStatus(this@PlaybackActivity)
-            
-            // 如果是网络错误，提示用户并退出
-            if (info.message.contains("网络错误") || info.message.contains("API错误")) {
-                android.util.Log.e("PlaybackActivity", "无法连接到激活服务器: ${info.message}")
+            try {
+                val info = com.leafstudio.tvplayer.utils.ActivationManager.checkActivationStatus(this@PlaybackActivity)
                 
-                // 显示友好的错误提示
-                runOnUiThread {
-                    android.app.AlertDialog.Builder(this@PlaybackActivity)
-                        .setTitle("无法连接服务器")
-                        .setMessage("激活服务暂时无法访问，请稍后再试或联系管理员。\n\n错误信息: ${info.message}")
-                        .setPositiveButton("退出") { _, _ ->
-                            finish()
-                        }
-                        .setCancelable(false)
-                        .show()
+                // 如果是网络错误，不直接退出，而是显示网络错误提示
+                if (info.message.contains("网络错误") || info.message.contains("API错误")) {
+                    android.util.Log.e("PlaybackActivity", "无法连接到激活服务器: ${info.message}")
+                    
+                    // 如果是网络问题，显示全屏网络提示
+                    handleNetworkLost()
+                    binding.tvNetworkMessage.text = "无法连接服务器，请检查网络\n${info.message}"
+                    return@launch
                 }
-                return@launch
+                
+                if (!info.isValid) {
+                    // 已过期，强制显示激活对话框
+                    showActivationDialog(true, info.message)
+                    return@launch // 不继续初始化
+                }
+                
+                // 已激活或试用期内（API已自动注册设备到数据库），正常初始化
+                initializeApp()
+                
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // 异常处理，防止闪退
+                handleNetworkLost()
+                binding.tvNetworkMessage.text = "初始化失败: ${e.message}"
             }
-            
-            if (!info.isValid) {
-                // 已过期，强制显示激活对话框
-                showActivationDialog(true, info.message)
-                return@launch // 不继续初始化
+        }
+    }
+    
+    private fun registerNetworkCallback() {
+        try {
+            val connectivityManager = getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+            networkCallback = object : android.net.ConnectivityManager.NetworkCallback() {
+                override fun onLost(network: android.net.Network) {
+                    super.onLost(network)
+                    runOnUiThread {
+                        handleNetworkLost()
+                    }
+                }
+
+                override fun onAvailable(network: android.net.Network) {
+                    super.onAvailable(network)
+                    runOnUiThread {
+                        handleNetworkAvailable()
+                    }
+                }
             }
+            connectivityManager.registerDefaultNetworkCallback(networkCallback!!)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun handleNetworkLost() {
+        isNetworkLost = true
+        binding.layoutNetworkStatus.visibility = View.VISIBLE
+        binding.tvNetworkMessage.text = "网络连接中断，正在重连..."
+        
+        // 暂停播放器，防止错误
+        try {
+            player?.pause()
+            if (ijkMediaPlayer != null) {
+                try {
+                    val pauseMethod = ijkMediaPlayer!!.javaClass.getMethod("pause")
+                    pauseMethod.invoke(ijkMediaPlayer)
+                } catch (e: Exception) { e.printStackTrace() }
+            }
+            vlcMediaPlayer?.pause()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun handleNetworkAvailable() {
+        // 如果之前没有检测到断网，且应用未初始化，则尝试初始化
+        if (!isNetworkLost && binding.layoutNetworkStatus.visibility == View.VISIBLE) {
+             checkActivationAndInit()
+             return
+        }
+        
+        if (isNetworkLost) {
+            isNetworkLost = false
+            binding.tvNetworkMessage.text = "网络已恢复，正在重新加载..."
             
-            // 已激活或试用期内（API已自动注册设备到数据库），正常初始化
-            initializeApp()
+            // 延迟隐藏提示并恢复播放
+            Handler(Looper.getMainLooper()).postDelayed({
+                binding.layoutNetworkStatus.visibility = View.GONE
+                
+                // 如果尚未初始化（例如启动时无网），则初始化
+                if (allChannels == null) {
+                    checkActivationAndInit()
+                } else {
+                    // 尝试恢复播放
+                    try {
+                        if (player != null) {
+                            player?.play()
+                            // 如果是 ExoPlayer，可能需要重新 prepare
+                            if (player?.playbackState == Player.STATE_IDLE || player?.playbackState == Player.STATE_ENDED) {
+                                player?.prepare()
+                            }
+                        } else if (ijkMediaPlayer != null) {
+                            val startMethod = ijkMediaPlayer!!.javaClass.getMethod("start")
+                            startMethod.invoke(ijkMediaPlayer)
+                        } else if (vlcMediaPlayer != null) {
+                            vlcMediaPlayer?.play()
+                        } else {
+                            // 如果播放器为空，重新初始化
+                            initializePlayer()
+                        }
+                        
+                        // 重新加载天气等信息
+                        updateWeather()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        // 如果恢复失败，尝试重新初始化播放器
+                        initializePlayer()
+                    }
+                }
+            }, 1000)
         }
     }
     
@@ -162,6 +335,9 @@ class PlaybackActivity : AppCompatActivity() {
         
         // 设置底部按钮点击监听
         setupBottomButtons()
+        
+        // 预初始化 VLC（避免首次使用时的延迟）
+        initializeVLCLibrary()
         
         // 初始化播放器
         initializePlayer()
@@ -245,14 +421,24 @@ class PlaybackActivity : AppCompatActivity() {
         
         // 按地区分组
         val groupedChannels = channels.groupBy { it.group ?: "未分类" }
-        val groups = groupedChannels.keys.toList()
+        channelGroups = groupedChannels.keys.toList()
         
         // 左侧：地区列表
         val groupRecyclerView = findViewById<RecyclerView>(R.id.group_recyclerview)
         groupRecyclerView.layoutManager = LinearLayoutManager(this)
-        val groupListAdapter = com.leafstudio.tvplayer.ui.GroupListAdapter(groups, 0) { groupIndex ->
+        
+        // 计算当前频道所在的组索引
+        var initialGroupIndex = 0
+        val currentChannel = getCurrentChannel()
+        if (currentChannel != null) {
+            val currentGroup = currentChannel.group ?: "未分类"
+            initialGroupIndex = channelGroups.indexOf(currentGroup)
+            if (initialGroupIndex < 0) initialGroupIndex = 0
+        }
+        
+        groupListAdapter = com.leafstudio.tvplayer.ui.GroupListAdapter(channelGroups, initialGroupIndex) { groupIndex ->
             // 点击地区，更新右侧频道列表
-            val selectedGroup = groups[groupIndex]
+            val selectedGroup = channelGroups[groupIndex]
             val channelsInGroup = groupedChannels[selectedGroup] ?: emptyList()
             
             // 更新右侧频道列表
@@ -260,14 +446,21 @@ class PlaybackActivity : AppCompatActivity() {
         }
         groupRecyclerView.adapter = groupListAdapter
         
-        // 右侧：频道列表（默认显示第一个地区的频道）
+        // 滚动到选中的组 (使用 post 确保在布局完成后执行)
+        if (initialGroupIndex > 0) {
+            groupRecyclerView.post {
+                groupRecyclerView.scrollToPosition(initialGroupIndex)
+            }
+        }
+        
+        // 右侧：频道列表（显示当前选中地区的频道）
         val channelRecyclerView = findViewById<RecyclerView>(R.id.channel_recyclerview)
         channelRecyclerView.layoutManager = LinearLayoutManager(this)
         
-        val firstGroup = groups.firstOrNull() ?: "未分类"
-        val firstGroupChannels = groupedChannels[firstGroup] ?: emptyList()
+        val selectedGroup = channelGroups.getOrNull(initialGroupIndex) ?: "未分类"
+        val selectedGroupChannels = groupedChannels[selectedGroup] ?: emptyList()
         
-        channelSidebarAdapter = ChannelSidebarAdapter(firstGroupChannels, getCurrentChannel()) { channel ->
+        channelSidebarAdapter = ChannelSidebarAdapter(selectedGroupChannels, getCurrentChannel()) { channel ->
             // 通过频道对象查找全局索引
             val globalIndex = channels.indexOf(channel)
             if (globalIndex >= 0) {
@@ -276,6 +469,14 @@ class PlaybackActivity : AppCompatActivity() {
             }
         }
         channelRecyclerView.adapter = channelSidebarAdapter
+        
+        // 滚动到选中的频道
+        if (currentChannel != null && selectedGroupChannels.contains(currentChannel)) {
+            val channelIndex = selectedGroupChannels.indexOf(currentChannel)
+            if (channelIndex >= 0) {
+                channelRecyclerView.scrollToPosition(channelIndex)
+            }
+        }
         
         // 线路选择侧边栏
         updateRouteSidebar()
@@ -352,6 +553,15 @@ class PlaybackActivity : AppCompatActivity() {
             }
         }
         
+        // 确保在使用 IJK/VLC 播放器时也能点击显示/隐藏控制栏
+        binding.flIjkContainer.setOnClickListener {
+            try {
+                toggleBottomControls()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        
         // 画面比例按钮
         binding.btnAspectRatio.setOnClickListener {
             toggleAspectRatio()
@@ -386,8 +596,9 @@ private fun toggleDecoder() {
             Toast.makeText(this, "IJKPlayer库不可用，继续使用系统解码器", Toast.LENGTH_LONG).show()
             currentDecoderType = 0
             // 保存设置并直接返回（不需要重新初始化，因为已经是系统解码）
+            // 保存设置并直接返回（不需要重新初始化，因为已经是系统解码）
             getSharedPreferences("settings", MODE_PRIVATE).edit()
-                .putInt("decoder", currentDecoderType)
+                .putInt("decoder_type", currentDecoderType)
                 .apply()
             return
         } else {
@@ -399,15 +610,16 @@ private fun toggleDecoder() {
     currentDecoderType = nextDecoder
 
     // 保存设置
+    // 保存设置
     getSharedPreferences("settings", MODE_PRIVATE).edit()
-        .putInt("decoder", currentDecoderType)
+        .putInt("decoder_type", currentDecoderType)
         .apply()
 
     // 提示用户当前切换
     val decoderName = when (currentDecoderType) {
         0 -> "系统解码(ExoPlayer)"
         1 -> "IJK硬解"
-        2 -> "VLC软解"
+        2 -> "软解"
         else -> "系统解码"
     }
 
@@ -444,14 +656,14 @@ private fun trySwitchToNextDecoder(): Boolean {
     decoderRetryCount++
 
     val nextDecoder = when (currentDecoderType) {
-        0 -> 2 // 系统 -> 软解
-        2 -> 1 // 软解 -> 硬解
-        1 -> 0 // 硬解 -> 系统
+        0 -> 2 // 系统 -> 软解(VLC)
+        2 -> 1 // 软解(VLC) -> 硬解(IJK)
+        1 -> 0 // 硬解(IJK) -> 系统
         else -> 0
     }
     
-    // 检查IJKPlayer可用性
-    if (nextDecoder != 0 && !isIJKPlayerAvailable()) {
+    // 检查硬解可用性 (仅针对 IJK 硬解)
+    if (nextDecoder == 1 && !isIJKPlayerAvailable()) {
         // 如果IJK不可用，跳过直接回到系统
         currentDecoderType = 0
     } else {
@@ -460,7 +672,7 @@ private fun trySwitchToNextDecoder(): Boolean {
     
     // 保存设置
     getSharedPreferences("settings", MODE_PRIVATE).edit()
-        .putInt("decoder", currentDecoderType)
+        .putInt("decoder_type", currentDecoderType)
         .apply()
         
     // 更新按钮文本
@@ -469,7 +681,7 @@ private fun trySwitchToNextDecoder(): Boolean {
     val decoderName = when (currentDecoderType) {
         0 -> "系统解码"
         1 -> "IJK硬解"
-        2 -> "IJK软解"
+        2 -> "软解"
         else -> "系统解码"
     }
     Toast.makeText(this, "播放失败，自动切换为: $decoderName", Toast.LENGTH_SHORT).show()
@@ -559,17 +771,17 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         .getBoolean("hardware_decoder_disabled", false)
     
     if (useHardwareDecoder && hardwareDecoderDisabled) {
-        android.util.Log.w("PlaybackActivity", "硬解已被禁用（之前崩溃过），自动切换到软解")
+        android.util.Log.w("PlaybackActivity", "硬解已被禁用（之前崩溃过），自动切换到系统解码")
         runOnUiThread {
-            Toast.makeText(this, "该设备不支持硬解，已切换到软解", Toast.LENGTH_SHORT).show()
-            currentDecoderType = 2 // 切换到软解
+            Toast.makeText(this, "该设备不支持硬解，已切换到系统解码", Toast.LENGTH_SHORT).show()
+            currentDecoderType = 0 // 切换到系统解码
             
             getSharedPreferences("settings", MODE_PRIVATE).edit()
-                .putInt("decoder", 2)
+                .putInt("decoder_type", 0)
                 .apply()
             
             updateDecoderButtonText()
-            initializeIJKPlayer(currentUrl, false) // 使用软解重新初始化
+            initializeExoPlayer(currentUrl) // 使用系统解码重新初始化
         }
         return
     }
@@ -598,6 +810,9 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         
         // 缓冲设置 (减少缓冲，提高起播速度)
         player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_FORMAT, "fflags", "nobuffer")
+        player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_FORMAT, "analyzeduration", 1L) // 减少分析时间
+        player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_FORMAT, "probesize", 1024L * 10) // 减少探测大小
+        player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_FORMAT, "flush_packets", 1L) // 立即刷新包
         player.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "packet-buffering", 0L)
 
         // 硬解/软解设置
@@ -669,10 +884,21 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         }
         
         // 6. 设置监听器
+        player.setOnVideoSizeChangedListener { _, width, height, _, _ ->
+            if (width > 0 && height > 0) {
+                currentVideoWidth = width
+                currentVideoHeight = height
+                // 视频尺寸改变时，应用当前的画面比例设置
+                updateTextureViewAspectRatio()
+            }
+        }
+
         player.setOnPreparedListener {
             it.start()
             hasTriedAllRoutes = false
             binding.ivLoadingBackground.visibility = View.GONE
+            // 准备好后尝试更新一次比例
+            updateTextureViewAspectRatio()
         }
         
         player.setOnErrorListener { _, what, extra ->
@@ -704,7 +930,7 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
                     currentDecoderType = 2
                     
                     getSharedPreferences("settings", MODE_PRIVATE).edit()
-                        .putInt("decoder", 2)
+                        .putInt("decoder_type", 2)
                         .apply()
                     
                     updateDecoderButtonText()
@@ -762,7 +988,7 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
                 currentDecoderType = 2 // 直接切换到软解
                 
                 getSharedPreferences("settings", MODE_PRIVATE).edit()
-                    .putInt("decoder", 2)
+                    .putInt("decoder_type", 2)
                     .apply()
                 
                 updateDecoderButtonText()
@@ -780,20 +1006,51 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
 }
     
     /**
+     * 预初始化 VLC 库（在应用启动时调用一次）
+     */
+    private fun initializeVLCLibrary() {
+        if (libVLC != null) return // 已初始化
+        
+        try {
+            val options = ArrayList<String>()
+            options.add("--aout=opensles")
+            options.add("--audio-time-stretch")
+            options.add("-vvv")
+            options.add("--network-caching=300")
+            options.add("--live-caching=300") 
+            options.add("--file-caching=300")
+            
+            libVLC = org.videolan.libvlc.LibVLC(this, options)
+            android.util.Log.d("PlaybackActivity", "VLC库预初始化完成")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            android.util.Log.e("PlaybackActivity", "VLC库初始化失败: ${e.message}")
+        }
+    }
+    
+    /**
      * 初始化 VLC 播放器（用于软解）
      */
-    private fun initializeVLCPlayer(currentUrl: String) {
+     private fun initializeVLCPlayer(currentUrl: String) {
         try {
-            android.util.Log.d("PlaybackActivity", "VLC: 开始初始化, URL=$currentUrl")
+            android.util.Log.d("PlaybackActivity", "VLC: 开始初始化播放器, URL=$currentUrl")
             
-            // 隐藏 ExoPlayer 和 IJKPlayer 容器
+            // 确保 libVLC 已初始化
+            if (libVLC == null) {
+                initializeVLCLibrary()
+            }
+            
+            // 停止旧的播放器但不释放 libVLC
+            vlcMediaPlayer?.stop()
+            vlcMediaPlayer?.vlcVout?.detachViews()
+            
+            // 隐藏 ExoPlayer
             binding.playerView.visibility = View.GONE
             binding.playerView.player = null
-            binding.flIjkContainer.visibility = View.GONE
-            binding.flIjkContainer.removeAllViews()
             
-            // 显示 VLC 容器（使用 IJK 容器复用）
+            // 显示 VLC 容器
             binding.flIjkContainer.visibility = View.VISIBLE
+            binding.flIjkContainer.removeAllViews()
             
             // 创建 TextureView for VLC
             val textureView = android.view.TextureView(this)
@@ -803,21 +1060,20 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
             )
             params.gravity = android.view.Gravity.CENTER
             textureView.layoutParams = params
-            
-            // 关键：让 TextureView 不拦截触摸事件，这样点击可以穿透到底层的控制按钮
             textureView.isClickable = false
             textureView.isFocusable = false
-            
             binding.flIjkContainer.addView(textureView)
             
-            // 初始化 libVLC
-            val options = ArrayList<String>()
-            options.add("--aout=opensles")
-            options.add("--audio-time-stretch") // 音频时间拉伸
-            options.add("-vvv") // 详细日志
-            
-            libVLC = org.videolan.libvlc.LibVLC(this, options)
-            vlcMediaPlayer = org.videolan.libvlc.MediaPlayer(libVLC)
+            // 创建或复用 MediaPlayer（关键：不重建libVLC，只重建MediaPlayer）
+            if (vlcMediaPlayer == null) {
+                vlcMediaPlayer = org.videolan.libvlc.MediaPlayer(libVLC)
+                android.util.Log.d("PlaybackActivity", "VLC: 创建新的MediaPlayer实例")
+            } else {
+                android.util.Log.d("PlaybackActivity", "VLC: 复用现有MediaPlayer实例")
+                // 重置状态
+                vlcMediaPlayer?.aspectRatio = null
+                vlcMediaPlayer?.scale = 0f
+            }
             
             // 设置视频输出
             textureView.surfaceTextureListener = object : android.view.TextureView.SurfaceTextureListener {
@@ -850,7 +1106,20 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
             
             vlcMediaPlayer?.media = media
             
-            // 设置事件监听
+            // 立即应用当前画面比例设置
+            if (aspectRatioMode == 0 || aspectRatioMode == 5) {
+                // 如果当前是全屏模式，预设 aspectRatio
+                val container = binding.flIjkContainer
+                if (container.width > 0 && container.height > 0) {
+                    vlcMediaPlayer?.aspectRatio = "${container.width}:${container.height}"
+                    android.util.Log.d("PlaybackActivity", "VLC 初始化：预设全屏 aspectRatio=${container.width}:${container.height}")
+                }
+            }
+            
+            // VLC 视频尺寸监听 (通过 Vout 回调或者定时检查，这里简化处理，在 Playing 时尝试获取)
+            // 由于 libVLC 3.x Java 绑定获取视频尺寸较麻烦，这里使用 Vout 回调来触发重绘
+            // 实际尺寸获取可能需要 Media.Track 信息
+            
             vlcMediaPlayer?.setEventListener { event ->
                 runOnUiThread {
                     when (event.type) {
@@ -858,10 +1127,15 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
                             android.util.Log.d("PlaybackActivity", "VLC: 开始播放")
                             binding.ivLoadingBackground.visibility = View.GONE
                             hasTriedAllRoutes = false
+                            
+                            // 延迟调用布局更新，确保 container 尺寸已就绪
+                            textureView.post {
+                                updateTextureViewAspectRatio()
+                            }
                         }
                         org.videolan.libvlc.MediaPlayer.Event.EncounteredError -> {
                             android.util.Log.e("PlaybackActivity", "VLC: 播放错误")
-                            Toast.makeText(this, "VLC播放错误，尝试切换线路", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, "软解播放错误，尝试切换线路", Toast.LENGTH_SHORT).show()
                             handlePlaybackError(null)
                         }
                         org.videolan.libvlc.MediaPlayer.Event.EndReached -> {
@@ -890,7 +1164,7 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         } catch (e: Exception) {
             e.printStackTrace()
             runOnUiThread {
-                Toast.makeText(this, "VLC初始化失败: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "软解初始化失败: ${e.message}", Toast.LENGTH_LONG).show()
                 // 切换回系统解码
                 currentDecoderType = 0
                 updateDecoderButtonText()
@@ -1070,126 +1344,51 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         Thread {
             try {
                 val client = okhttp3.OkHttpClient.Builder()
-                    .connectTimeout(5, java.util.concurrent.TimeUnit.SECONDS) // 缩短超时时间
+                    .connectTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
                     .readTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
                     .build()
-                    
-                // 1. 尝试直接使用 wttr.in 获取位置和天气
-                var url = "https://wttr.in/?format=%l+%C+%t&lang=zh"
-                var request = okhttp3.Request.Builder()
+                
+                // 使用天气预报API (tianqiapi.com) - 免费且稳定的国内服务
+                // IP自动定位版本
+                val url = "https://tianqiapi.com/free/day?appid=23035354&appsecret=8YvlPNrz"
+                val request = okhttp3.Request.Builder()
                     .url(url)
-                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-                    .header("Accept-Language", "zh-CN,zh;q=0.9")
                     .build()
                 
-                var weatherText: String? = null
-                try {
-                    val response = client.newCall(request).execute()
-                    if (response.isSuccessful) {
-                        weatherText = response.body?.string()?.trim()
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-
-                // 检查是否包含中文，如果不包含中文（且不是"未获取"），则尝试强制获取中文位置
-                val hasChinese = weatherText?.matches(Regex(".*[\\u4e00-\\u9fa5].*")) == true
-
-                // 2. 如果失败，或者显示的是英文地名（如 Huamu），尝试使用 PCOnline 获取中文地名
-                if (weatherText.isNullOrEmpty() || weatherText.contains("not found", true) || weatherText.contains("Unknown", true) || !hasChinese) {
-                     try {
-                        // PCOnline 接口，返回 GBK 编码的 JSON
-                        val pconlineUrl = "http://whois.pconline.com.cn/ipJson.jsp?json=true"
-                        val pcRequest = okhttp3.Request.Builder().url(pconlineUrl).build()
-                        val pcResponse = client.newCall(pcRequest).execute()
+                val response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val jsonStr = response.body?.string()
+                    if (jsonStr != null) {
+                        val json = org.json.JSONObject(jsonStr)
                         
-                        if (pcResponse.isSuccessful) {
-                            val bytes = pcResponse.body?.bytes()
-                            if (bytes != null) {
-                                // PCOnline 返回的是 GBK 编码
-                                val jsonStr = String(bytes, java.nio.charset.Charset.forName("GBK"))
-                                val json = org.json.JSONObject(jsonStr)
-                                var city = json.optString("city")
-                                val addr = json.optString("addr")
-                                
-                                // 如果 city 为空，尝试从 addr 解析
-                                if (city.isEmpty() && addr.isNotEmpty()) {
-                                    city = addr.split(" ").firstOrNull() ?: ""
-                                }
-                                
-                                if (city.isNotEmpty()) {
-                                    // 3. 使用获取到的中文城市名再次查询天气
-                                    val cityUrl = "https://wttr.in/$city?format=%l+%C+%t&lang=zh"
-                                    val cityRequest = request.newBuilder().url(cityUrl).build()
-                                    val cityResponse = client.newCall(cityRequest).execute()
-                                    
-                                    if (cityResponse.isSuccessful) {
-                                        val text = cityResponse.body?.string()?.trim()
-                                        if (!text.isNullOrEmpty() && !text.contains("not found", true)) {
-                                            weatherText = text
-                                        }
-                                    }
-                                }
+                        // 解析返回数据
+                        val city = json.optString("city", "")
+                        val wea = json.optString("wea", "") // 天气状况
+                        val tem = json.optString("tem", "") // 当前温度
+                        
+                        if (city.isNotEmpty()) {
+                            val weatherText = "$city $wea $tem°"
+                            
+                            runOnUiThread {
+                                binding.tvWeather.text = weatherText
+                            }
+                        } else {
+                            // 如果获取失败，显示默认
+                            runOnUiThread {
+                                binding.tvWeather.text = "北京"
                             }
                         }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        // PCOnline 失败，尝试 ip-api
-                        try {
-                            val ipApiUrl = "http://ip-api.com/json/?lang=zh-CN"
-                            val ipApiRequest = okhttp3.Request.Builder().url(ipApiUrl).build()
-                            val ipApiResponse = client.newCall(ipApiRequest).execute()
-                            if (ipApiResponse.isSuccessful) {
-                                val jsonStr = ipApiResponse.body?.string()
-                                if (!jsonStr.isNullOrEmpty()) {
-                                    val json = org.json.JSONObject(jsonStr)
-                                    val city = json.optString("city")
-                                    if (city.isNotEmpty()) {
-                                        val cityUrl = "https://wttr.in/$city?format=%l+%C+%t&lang=zh"
-                                        val cityRequest = request.newBuilder().url(cityUrl).build()
-                                        val cityResponse = client.newCall(cityRequest).execute()
-                                        if (cityResponse.isSuccessful) {
-                                            val text = cityResponse.body?.string()?.trim()
-                                            if (!text.isNullOrEmpty()) weatherText = text
-                                        }
-                                    }
-                                }
-                            }
-                        } catch (e2: Exception) {
-                            e2.printStackTrace()
-                        }
                     }
-                }
-                
-                // 4. 如果仍然失败，最后尝试只获取天气（不带位置）
-                if (weatherText.isNullOrEmpty() || weatherText.contains("not found", true)) {
-                    try {
-                        val fallbackUrl = "https://wttr.in/?format=%C+%t&lang=zh"
-                        val fallbackRequest = request.newBuilder().url(fallbackUrl).build()
-                        val response = client.newCall(fallbackRequest).execute()
-                        if (response.isSuccessful) {
-                             val text = response.body?.string()?.trim()
-                             if (!text.isNullOrEmpty()) {
-                                 weatherText = text
-                             }
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                
-                val finalWeatherText = weatherText ?: "天气获取失败"
-                runOnUiThread {
-                    try {
-                        binding.tvWeather.text = finalWeatherText.replace("+", " ")
-                    } catch (e: Exception) {
-                        e.printStackTrace()
+                } else {
+                    // 请求失败，显示默认
+                    runOnUiThread {
+                        binding.tvWeather.text = "北京"
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 runOnUiThread {
-                    binding.tvWeather.text = "天气获取失败"
+                    binding.tvWeather.text = "北京"
                 }
             }
         }.start()
@@ -1238,9 +1437,9 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
     // 移除 dispatchTouchEvent，避免每次触摸都强制显示控制栏
     // override fun dispatchTouchEvent(ev: MotionEvent?): Boolean { ... }
     
-    override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         // 用户按键时显示按钮
-        if (event?.action == KeyEvent.ACTION_DOWN) {
+        if (event.action == KeyEvent.ACTION_DOWN) {
             showBottomControls()
         }
         return super.dispatchKeyEvent(event)
@@ -1399,6 +1598,19 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         // 更新适配器
         channelSidebarAdapter?.updateCurrentChannel(getCurrentChannel())
         
+        // 更新地区列表选中状态
+        if (currentChannel != null && channelGroups.isNotEmpty()) {
+            val currentGroup = currentChannel.group ?: "未分类"
+            val groupIndex = channelGroups.indexOf(currentGroup)
+            if (groupIndex >= 0) {
+                groupListAdapter?.updateSelectedGroup(groupIndex)
+                // 确保地区列表滚动到选中项
+                findViewById<RecyclerView>(R.id.group_recyclerview)?.post {
+                    findViewById<RecyclerView>(R.id.group_recyclerview)?.scrollToPosition(groupIndex)
+                }
+            }
+        }
+        
         // 显示大大的黄色台号
         if (currentChannel != null && currentChannel.number > 0) {
             showChannelNumber(currentChannel.number)
@@ -1469,7 +1681,7 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
 
             // 读取解码器设置
             val prefs = getSharedPreferences("settings", MODE_PRIVATE)
-            currentDecoderType = prefs.getInt("decoder", 0)
+            currentDecoderType = prefs.getInt("decoder_type", 0)
             
             // 更新解码器按钮文本
             updateDecoderButtonText()
@@ -1771,7 +1983,37 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
     
     override fun onDestroy() {
         super.onDestroy()
+        
+        // 注销广播接收器
+        try {
+            unregisterReceiver(playbackControlReceiver)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        
+        // 注销网络监听
+        networkCallback?.let {
+            try {
+                val connectivityManager = getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+                connectivityManager.unregisterNetworkCallback(it)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        
         releasePlayer()
+        
+        // 真正释放 VLC 资源（仅在Activity销毁时）
+        try {
+            vlcMediaPlayer?.release()
+            vlcMediaPlayer = null
+            libVLC?.release()
+            libVLC = null
+            android.util.Log.d("PlaybackActivity", "VLC: Activity销毁，完全释放资源")
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        
         digitHandler.removeCallbacks(digitRunnable)
         channelNumberHandler.removeCallbacks(channelNumberRunnable)
         resolutionHandler.removeCallbacks(resolutionRunnable)
@@ -1809,14 +2051,15 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         }
         ijkMediaPlayer = null
     
-    // 释放 VLC Player
+    
+    // 释放 VLC Player（但保留实例以便快速换台）
     try {
-        vlcMediaPlayer?.stop()
-        vlcMediaPlayer?.vlcVout?.detachViews()
-        vlcMediaPlayer?.release()
-        vlcMediaPlayer = null
-        libVLC?.release()
-        libVLC = null
+        if (vlcMediaPlayer != null) {
+            vlcMediaPlayer?.stop()
+            vlcMediaPlayer?.vlcVout?.detachViews()
+            // 不释放 vlcMediaPlayer 和 libVLC，保留实例以便复用
+            android.util.Log.d("PlaybackActivity", "VLC: 停止播放但保留实例")
+        }
     } catch (e: Exception) {
         e.printStackTrace()
     }
@@ -1852,7 +2095,7 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
             .setView(dialogView)
             .create()
         
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         
         // 获取当前版本
         val currentVersion = try {
@@ -1924,35 +2167,54 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
             loginStatus.setTextColor(android.graphics.Color.parseColor("#999999"))
         }
         
-        // 更新激活状态显示
+        // 显示当前城市
+        val currentCityTextView = dialogView.findViewById<TextView>(R.id.tv_current_city)
+        val customCity = prefs.getString("custom_city", "") ?: ""
+        currentCityTextView.text = if (customCity.isEmpty()) "自动定位" else customCity
+        
+        // 更新激活状态显示（带自动刷新）
         val activationStatus = dialogView.findViewById<TextView>(R.id.tv_activation_status)
-        lifecycleScope.launch {
-            try {
-                val info = com.leafstudio.tvplayer.utils.ActivationManager.checkActivationStatus(this@PlaybackActivity)
-                runOnUiThread {
-                    if (info.isValid) {
-                        // 已激活 - 绿色
-                        val remainingDays = (info.remainingSeconds / 86400).toInt()
-                        activationStatus.text = if (remainingDays > 0) {
-                            "已激活 (剩余${remainingDays}天)"
-                        } else {
-                            val remainingHours = (info.remainingSeconds / 3600).toInt()
-                            "已激活 (剩余${remainingHours}小时)"
+        
+        // 创建定时刷新器
+        val activationHandler = Handler(Looper.getMainLooper())
+        val activationUpdateRunnable = object : Runnable {
+            override fun run() {
+                lifecycleScope.launch {
+                    try {
+                        val info = com.leafstudio.tvplayer.utils.ActivationManager.checkActivationStatus(this@PlaybackActivity)
+                        runOnUiThread {
+                            if (info.isValid) {
+                                // 已激活 - 绿色
+                                val remainingDays = (info.remainingSeconds / 86400).toInt()
+                                activationStatus.text = if (remainingDays > 0) {
+                                    "已激活 (剩余${remainingDays}天)"
+                                } else {
+                                    val remainingHours = (info.remainingSeconds / 3600).toInt()
+                                    "已激活 (剩余${remainingHours}小时)"
+                                }
+                                activationStatus.setTextColor(android.graphics.Color.parseColor("#4CAF50"))
+                            } else {
+                                // 未激活 - 红色
+                                activationStatus.text = info.message
+                                activationStatus.setTextColor(android.graphics.Color.parseColor("#F44336"))
+                            }
                         }
-                        activationStatus.setTextColor(android.graphics.Color.parseColor("#4CAF50"))
-                    } else {
-                        // 未激活 - 红色
-                        activationStatus.text = "未激活"
-                        activationStatus.setTextColor(android.graphics.Color.parseColor("#F44336"))
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
                 }
-            } catch (e: Exception) {
-                android.util.Log.e("PlaybackActivity", "查询激活状态失败", e)
-                runOnUiThread {
-                    activationStatus.text = "查询失败"
-                    activationStatus.setTextColor(android.graphics.Color.parseColor("#999999"))
-                }
+                // 每秒刷新一次
+                activationHandler.postDelayed(this, 1000)
             }
+        }
+        
+        // 立即执行一次
+        activationUpdateRunnable.run()
+        
+        // 对话框关闭时停止刷新
+        dialog.setOnDismissListener {
+            activationHandler.removeCallbacks(activationUpdateRunnable)
+            showBottomControls()
         }
         
         // 用户登录按钮
@@ -1982,7 +2244,7 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         }
 
         // 设置城市按钮
-        dialogView.findViewById<android.widget.Button>(R.id.btn_set_city).setOnClickListener {
+        dialogView.findViewById<View>(R.id.btn_set_city).setOnClickListener {
             dialog.setOnDismissListener(null)
             dialog.dismiss()
             showCitySettingDialog()
@@ -2018,31 +2280,40 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         val prefs = getSharedPreferences("settings", MODE_PRIVATE)
         val currentCity = prefs.getString("custom_city", "") ?: ""
         
-        val input = android.widget.EditText(this)
-        input.setText(currentCity)
-        input.hint = "请输入城市名称（如：上海）"
-        input.setTextColor(android.graphics.Color.WHITE)
-        input.setHintTextColor(android.graphics.Color.GRAY)
+        // 常用城市列表
+        val cities = arrayOf(
+            "北京", "上海", "广州", "深圳", "成都", "杭州", "重庆", "武汉", "西安", "天津",
+            "南京", "郑州", "长沙", "沈阳", "青岛", "宁波", "厦门", "苏州", "无锡", "福州",
+            "济南", "大连", "哈尔滨", "长春", "石家庄", "合肥", "南昌", "贵阳", "昆明", "南宁",
+            "太原", "兰州", "海口", "银川", "西宁", "乌鲁木齐", "拉萨", "呼和浩特", "自动定位"
+        )
+        
+        val currentIndex = if (currentCity.isEmpty()) {
+            cities.size - 1 // 默认选中"自动定位"
+        } else {
+            cities.indexOf(currentCity).takeIf { it >= 0 } ?: cities.size - 1
+        }
         
         val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("设置城市")
-            .setMessage("设置后将使用指定城市的天气信息")
-            .setView(input)
-            .setPositiveButton("确定") { _, _ ->
-                val city = input.text.toString().trim()
-                if (city.isNotEmpty()) {
-                    prefs.edit().putString("custom_city", city).apply()
-                    Toast.makeText(this, "已设置城市为：$city", Toast.LENGTH_SHORT).show()
-                    // 立即更新天气
-                    updateWeather()
-                } else {
+            .setTitle("选择城市")
+            .setSingleChoiceItems(cities, currentIndex) { dialog, which ->
+                val selectedCity = cities[which]
+                if (selectedCity == "自动定位") {
                     prefs.edit().remove("custom_city").apply()
                     Toast.makeText(this, "已清除自定义城市，将使用自动定位", Toast.LENGTH_SHORT).show()
-                    updateWeather()
+                } else {
+                    prefs.edit().putString("custom_city", selectedCity).apply()
+                    Toast.makeText(this, "已设置城市为：$selectedCity", Toast.LENGTH_SHORT).show()
                 }
+                // 立即更新天气
+                updateWeather()
+                dialog.dismiss()
             }
             .setNegativeButton("取消", null)
             .create()
+        
+        // 设置透明圆角背景
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         
         dialog.setOnDismissListener {
             showBottomControls()
@@ -2051,6 +2322,7 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
         hideBottomControls()
         dialog.show()
     }
+
 
     /**
      * 显示关于对话框
@@ -2061,7 +2333,7 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
             .setView(dialogView)
             .create()
         
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         
         // 设置版本号
         try {
@@ -2097,6 +2369,9 @@ private fun initializeIJKPlayer(currentUrl: String, useHardwareDecoder: Boolean)
             }
             .setNegativeButton("取消", null)
             .create()
+        
+        // 设置透明圆角背景
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         
         dialog.setOnDismissListener {
             showBottomControls()
@@ -2145,6 +2420,11 @@ private fun toggleAspectRatio() {
 
     binding.playerView.resizeMode = resizeMode
 
+    // 如果当前是 IJK 或 VLC，手动调整 TextureView
+    if (currentDecoderType != 0) {
+        updateTextureViewAspectRatio()
+    }
+
     // 按顺序映射文字标签
     val modeName = when (aspectRatioMode) {
         0 -> "全屏"
@@ -2163,14 +2443,134 @@ private fun toggleAspectRatio() {
     hideBottomControls()
 }
 
+/**
+ * 更新 TextureView 的画面比例 (用于 IJK/VLC)
+ */
+    /**
+     * 更新 TextureView 的画面比例 (用于 IJK/VLC)
+     */
+    private fun updateTextureViewAspectRatio() {
+        try {
+            val container = binding.flIjkContainer
+            val textureView = container.getChildAt(0) as? android.view.TextureView ?: return
+            
+            val containerWidth = container.width
+            val containerHeight = container.height
+            
+            if (containerWidth == 0 || containerHeight == 0) return
+            
+            // 重置 TextureView 的缩放状态
+            textureView.scaleX = 1.0f
+            textureView.scaleY = 1.0f
+            
+            var targetWidth = containerWidth
+            var targetHeight = containerHeight
+            
+            // 0=全屏, 1=剪裁, 2=16:9, 3=原始, 4=4:3, 5=填充
+            when (aspectRatioMode) {
+                0, 5 -> { 
+                    // 全屏/填充 - 拉伸填满
+                    targetWidth = containerWidth
+                    targetHeight = containerHeight
+                }
+                1 -> {
+                    // 剪裁 (Zoom)
+                    if (currentVideoWidth > 0 && currentVideoHeight > 0) {
+                        val videoRatio = currentVideoWidth.toFloat() / currentVideoHeight
+                        val screenRatio = containerWidth.toFloat() / containerHeight
+                        
+                        if (videoRatio > screenRatio) {
+                            targetHeight = containerHeight
+                            targetWidth = (containerHeight * videoRatio).toInt()
+                        } else {
+                            targetWidth = containerWidth
+                            targetHeight = (containerWidth / videoRatio).toInt()
+                        }
+                    }
+                }
+                2 -> {
+                    // 16:9
+                    val targetRatio = 16f / 9f
+                    val screenRatio = containerWidth.toFloat() / containerHeight
+                    
+                    if (targetRatio > screenRatio) {
+                        targetWidth = containerWidth
+                        targetHeight = (containerWidth / targetRatio).toInt()
+                    } else {
+                        targetHeight = containerHeight
+                        targetWidth = (containerHeight * targetRatio).toInt()
+                    }
+                }
+                3 -> {
+                    // 原始 (Fit)
+                    if (currentVideoWidth > 0 && currentVideoHeight > 0) {
+                        val videoRatio = currentVideoWidth.toFloat() / currentVideoHeight
+                        val screenRatio = containerWidth.toFloat() / containerHeight
+                        
+                        if (videoRatio > screenRatio) {
+                            targetWidth = containerWidth
+                            targetHeight = (containerWidth / videoRatio).toInt()
+                        } else {
+                            targetHeight = containerHeight
+                            targetWidth = (containerHeight * videoRatio).toInt()
+                        }
+                    }
+                }
+                4 -> {
+                    // 4:3
+                    val targetRatio = 4f / 3f
+                    val screenRatio = containerWidth.toFloat() / containerHeight
+                    
+                    if (targetRatio > screenRatio) {
+                        targetWidth = containerWidth
+                        targetHeight = (containerWidth / targetRatio).toInt()
+                    } else {
+                        targetHeight = containerHeight
+                        targetWidth = (containerHeight * targetRatio).toInt()
+                    }
+                }
+            }
+            
+            val params = textureView.layoutParams as android.widget.FrameLayout.LayoutParams
+            params.width = targetWidth
+            params.height = targetHeight
+            params.gravity = android.view.Gravity.CENTER
+            textureView.layoutParams = params
+            
+            // VLC 特殊处理：在全屏模式下强制拉伸填满屏幕
+            if (currentDecoderType == 2 && vlcMediaPlayer != null) {
+                try {
+                    if (aspectRatioMode == 0 || aspectRatioMode == 5) {
+                        // 全屏模式：强制 VLC 按屏幕比例拉伸
+                        // 设置 aspectRatio 为屏幕的宽高比，VLC 会拉伸视频以匹配这个比例
+                        vlcMediaPlayer?.aspectRatio = "$containerWidth:$containerHeight"
+                        vlcMediaPlayer?.scale = 0f
+                        
+                        android.util.Log.d("PlaybackActivity", "VLC 全屏设置: aspectRatio=${containerWidth}:${containerHeight}")
+                    } else {
+                        // 其他模式：使用默认设置
+                        vlcMediaPlayer?.aspectRatio = null
+                        vlcMediaPlayer?.scale = 0f
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     /**
      * 加载加载背景图
      */
     private fun loadLoadingBackground() {
         try {
             binding.ivLoadingBackground.visibility = View.VISIBLE
+            // 使用用户指定的背景图接口
             Glide.with(this)
-                .load("http://api.btstu.cn/sjbz/")
+                .load("https://api.btstu.cn/sjbz/?lx=meizi")
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .skipMemoryCache(true)
                 .into(binding.ivLoadingBackground)
@@ -2221,7 +2621,7 @@ private fun toggleAspectRatio() {
             .setCancelable(true)
             .create()
         
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         
         val qrcodeImageView = dialogView.findViewById<android.widget.ImageView>(R.id.iv_qrcode)
         val loadingProgress = dialogView.findViewById<android.widget.ProgressBar>(R.id.pb_loading)
@@ -2297,8 +2697,16 @@ private fun toggleAspectRatio() {
     
     /**
      * 生成二维码图片
+     * TODO: ZXing 依赖只在 mobile 变体中可用，需要移到单独的源集或使用条件编译
      */
     private fun generateQRCodeBitmap(content: String, width: Int, height: Int): android.graphics.Bitmap {
+        // 暂时禁用 QR code 生成，返回一个占位图
+        val bitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bitmap)
+        canvas.drawColor(android.graphics.Color.WHITE)
+        return bitmap
+        
+        /* ZXing QR Code generation - only available in mobile variant
         val hints = hashMapOf<com.google.zxing.EncodeHintType, Any>()
         hints[com.google.zxing.EncodeHintType.CHARACTER_SET] = "UTF-8"
         hints[com.google.zxing.EncodeHintType.ERROR_CORRECTION] = com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.H
@@ -2326,6 +2734,7 @@ private fun toggleAspectRatio() {
         val bitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
         bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
         return bitmap
+        */
     }
     
     /**
@@ -2479,15 +2888,11 @@ private fun toggleAspectRatio() {
         handler: Handler,
         updateRunnableContainer: Array<Runnable?>
     ) {
-        val btnRefresh = dialogView.findViewById<android.widget.Button>(R.id.btn_refresh_status)
         val layoutStatus = dialogView.findViewById<View>(R.id.layout_activation_status)
         val layoutNotActivated = dialogView.findViewById<View>(R.id.layout_not_activated)
         val tvExpiry = dialogView.findViewById<TextView>(R.id.tv_expiry_date)
         val tvRemaining = dialogView.findViewById<TextView>(R.id.tv_remaining_time)
         val tvTrial = dialogView.findViewById<TextView>(R.id.tv_trial_info)
-        
-        btnRefresh.isEnabled = false
-        btnRefresh.text = "刷新中..."
         
         lifecycleScope.launch {
             val ctx = dialogView.context
@@ -2499,17 +2904,28 @@ private fun toggleAspectRatio() {
                 layoutStatus.visibility = View.VISIBLE
                 layoutNotActivated.visibility = View.GONE
 
-                tvExpiry.text = "过期时间: ${info.expiryTime}"
+                val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                val expiryDateStr = dateFormat.format(java.util.Date(info.expiryTime))
+                tvExpiry.text = "过期时间: $expiryDateStr"
+
+                // 记录开始时间戳，用于计算已流逝的时间
+                val startTimeMillis = System.currentTimeMillis()
+                val initialRemainingSeconds = info.remainingSeconds
 
                 val timerRunnable = object : Runnable {
                     override fun run() {
-                        val currentRemainingSeconds = info.remainingSeconds - (System.currentTimeMillis() - System.currentTimeMillis()) / 1000
+                        // 计算从开始到现在已流逝的秒数
+                        val elapsedSeconds = (System.currentTimeMillis() - startTimeMillis) / 1000
+                        // 当前剩余秒数 = 初始剩余秒数 - 已流逝秒数
+                        val currentRemainingSeconds = initialRemainingSeconds - elapsedSeconds
+                        
                         if (currentRemainingSeconds > 0) {
                             val days = currentRemainingSeconds / 86400
                             val hours = (currentRemainingSeconds % 86400) / 3600
                             val minutes = (currentRemainingSeconds % 3600) / 60
                             val seconds = currentRemainingSeconds % 60
                             tvRemaining.text = String.format("剩余: %d天 %02d:%02d:%02d", days, hours, minutes, seconds)
+                            tvRemaining.setTextColor(android.graphics.Color.parseColor("#4CAF50"))
                             handler.postDelayed(this, 1000)
                         } else {
                             tvRemaining.text = "已过期"
@@ -2532,9 +2948,6 @@ private fun toggleAspectRatio() {
                 layoutNotActivated.visibility = View.VISIBLE
                 tvTrial.text = info.message
             }
-            
-            btnRefresh.isEnabled = true
-            btnRefresh.text = "刷新激活状态"
         }
     }
 
@@ -2549,12 +2962,11 @@ private fun toggleAspectRatio() {
             .setCancelable(!forceActivation)
             .create()
         
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         
         val machineCodeTextView = dialogView.findViewById<TextView>(R.id.tv_machine_code)
         val copyButton = dialogView.findViewById<android.widget.Button>(R.id.btn_copy_machine_code)
         val cancelButton = dialogView.findViewById<android.widget.Button>(R.id.btn_cancel_activation)
-        val refreshButton = dialogView.findViewById<android.widget.Button>(R.id.btn_refresh_status)
 
         // 获取并显示机器码
         val machineCode = com.leafstudio.tvplayer.utils.ActivationManager.getMachineCode(this)
@@ -2566,7 +2978,7 @@ private fun toggleAspectRatio() {
         // 初始刷新
         refreshActivationUI(dialog, dialogView, forceActivation, handler, updateRunnableContainer)
         
-        // 自动刷新
+        // 自动刷新（每10秒检查一次激活状态）
         val autoRefreshRunnable = object : Runnable {
             override fun run() {
                 if (dialog.isShowing) {
@@ -2583,10 +2995,6 @@ private fun toggleAspectRatio() {
             val clip = android.content.ClipData.newPlainText("机器码", machineCode)
             clipboard.setPrimaryClip(clip)
             Toast.makeText(dialog.context, "机器码已复制", Toast.LENGTH_SHORT).show()
-        }
-        
-        refreshButton.setOnClickListener {
-            refreshActivationUI(dialog, dialogView, forceActivation, handler, updateRunnableContainer)
         }
         
         if (forceActivation) {

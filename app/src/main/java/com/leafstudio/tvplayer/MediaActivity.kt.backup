@@ -1,0 +1,229 @@
+package com.leafstudio.tvplayer
+
+import android.content.Context
+import android.os.Bundle
+import android.view.View
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.FragmentActivity
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.leafstudio.tvplayer.model.Category
+import com.leafstudio.tvplayer.model.Live
+import com.leafstudio.tvplayer.model.Site
+import com.leafstudio.tvplayer.model.TvBoxConfig
+import com.leafstudio.tvplayer.model.Vod
+import com.leafstudio.tvplayer.ui.MediaCategoryAdapter
+import com.leafstudio.tvplayer.ui.MediaContentAdapter
+import com.leafstudio.tvplayer.ui.SourceAdapter
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
+import java.util.concurrent.TimeUnit
+
+class MediaActivity : FragmentActivity() {
+    
+    private lateinit var sourceAdapter: SourceAdapter
+    private lateinit var categoryAdapter: MediaCategoryAdapter
+    private lateinit var contentAdapter: MediaContentAdapter
+    
+    private var config: TvBoxConfig? = null
+    private var currentSite: Site? = null
+    private var currentCategory: Category? = null
+    
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .build()
+        
+    private val configUrl = "https://yezheng.dpdns.org/tv/tvbox_2026.json"
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_media)
+        
+        // 设置全屏
+        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN)
+        
+        setupViews()
+        loadConfig()
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // 暂停 PlaybackActivity 的播放器
+        val intent = android.content.Intent("com.leafstudio.tvplayer.PAUSE_PLAYBACK")
+        sendBroadcast(intent)
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        if (isFinishing) {
+            val intent = android.content.Intent("com.leafstudio.tvplayer.RESUME_PLAYBACK")
+            sendBroadcast(intent)
+        }
+    }
+    
+    private fun setupViews() {
+        // 时间显示
+        val timeText = findViewById<TextView>(R.id.tv_time)
+        timeText.text = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
+        
+        // 源切换按钮
+       findViewById<View>(R.id.tv_current_source).setOnClickListener {
+            showSourceDialog()
+        }
+        
+        // 搜索按钮
+        findViewById<View>(R.id.btn_search).setOnClickListener {
+            showSearchDialog()
+        }
+        
+        // 历史按钮
+        findViewById<View>(R.id.btn_history).setOnClickListener {
+            Toast.makeText(this, "历史功能开发中", Toast.LENGTH_SHORT).show()
+        }
+        
+        // 直播按钮
+        findViewById<View>(R.id.btn_live).setOnClickListener {
+            val intent = android.content.Intent(this, LiveActivity::class.java)
+            startActivity(intent)
+        }
+        
+        // 推送按钮
+        findViewById<View>(R.id.btn_push).setOnClickListener {
+            Toast.makeText(this, "推送功能开发中", Toast.LENGTH_SHORT).show()
+        }
+        
+        // 收藏按钮
+        findViewById<View>(R.id.btn_favorites).setOnClickListener {
+            Toast.makeText(this, "收藏功能开发中", Toast.LENGTH_SHORT).show()
+        }
+        
+        // 设置按钮
+        findViewById<View>(R.id.btn_settings).setOnClickListener {
+            val intent = android.content.Intent(this, SettingsActivity::class.java)
+            startActivity(intent)
+        }
+        
+        // 分类列表
+        val rvCategories = findViewById<RecyclerView>(R.id.rv_categories)
+        rvCategories.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        categoryAdapter = MediaCategoryAdapter(emptyList()) { category ->
+            currentCategory = category
+            loadContent(category)
+        }
+        rvCategories.adapter = categoryAdapter
+        
+        // 内容列表
+        val rvContent = findViewById<RecyclerView>(R.id.rv_content)
+        rvContent.layoutManager = GridLayoutManager(this, 5)
+        contentAdapter = MediaContentAdapter(emptyList()) { vod ->
+            val intent = android.content.Intent(this, VodDetailActivity::class.java)
+            intent.putExtra("vod", vod)
+            startActivity(intent)
+        }
+        rvContent.adapter = contentAdapter
+        
+        // 源适配器
+        sourceAdapter = SourceAdapter(emptyList()) { site ->
+            onSiteSelected(site)
+        }
+    }
+    
+    private fun loadConfig() {
+        showLoading(true)
+        
+        Thread {
+            try {
+                val request = Request.Builder()
+                    .url(configUrl)
+                    .header("User-Agent", "Mozilla/5.0")
+                    .build()
+                
+                val response = client.newCall(request).execute()
+                val jsonStr = response.body?.string()
+                
+                if (jsonStr != null) {
+                    val jsonObject = JSONObject(jsonStr)
+                    val sites = parseSites(jsonObject)
+                    val lives = parseLives(jsonObject)
+                    val spider = resolveUrl(jsonObject.optString("spider"))
+                    
+                    config = TvBoxConfig(spider, sites, lives)
+                    
+                    runOnUiThread {
+                        showLoading(false)
+                        sourceAdapter.updateSources(config.sites)
+                        
+                        // 选择第一个非公告源
+                        val defaultSite = config.sites.firstOrNull { 
+                            !it.api.contains("Notice", ignoreCase = true) && !it.name.contains("公告", ignoreCase = true)
+                        }
+                        if (defaultSite != null) {
+                            onSiteSelected(defaultSite)
+                        } else {
+                            showError("没有可用的源")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                runOnUiThread {
+                    showLoading(false)
+                    showError("配置加载失败: ${e.message}")
+                }
+            }
+        }.start()
+    }
+    
+    private fun parseSites(jsonObject: JSONObject): List<Site> {
+        // Implementation to parse sites
+        return emptyList()
+    }
+    
+    private fun parseLives(jsonObject: JSONObject): List<Live> {
+        // Implementation to parse lives
+        return emptyList()
+    }
+    
+    private fun resolveUrl(url: String): String {
+        // Implementation to resolve URL
+        return url
+    }
+    
+    private fun onSiteSelected(site: Site) {
+        // Implementation
+        showError("功能开发中")
+    }
+    
+    private fun loadContent(category: Category) {
+        // Implementation
+    }
+    
+    private fun showSourceDialog() {
+        // Implementation
+    }
+    
+    private fun showSearchDialog() {
+        // Implementation
+    }
+    
+    private fun showLoading(show: Boolean) {
+        findViewById<View>(R.id.progress_bar).visibility = if (show) View.VISIBLE else View.GONE
+    }
+    
+    private fun showError(message: String) {
+        findViewById<TextView>(R.id.error_text).apply {
+            text = message
+            visibility = View.VISIBLE
+        }
+    }
+}

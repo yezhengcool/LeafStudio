@@ -1,0 +1,146 @@
+[
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_activity_main.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/activity_main.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_item_media_category.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/item_media_category.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_item_group.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/item_group.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/xml_file_paths.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/xml/file_paths.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_item_channel.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/item_channel.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/drawable_app_banner.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/drawable/app_banner.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_item_media_content.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/item_media_content.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_dialog_activation.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/dialog_activation.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_activity_playback.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/activity_playback.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_activity_media.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/activity_media.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_item_channel_phone.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/item_channel_phone.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_item_route_sidebar.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/item_route_sidebar.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_sidebar_route_list.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/sidebar_route_list.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/drawable_dialog_background.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/drawable/dialog_background.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_dialog_menu.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/dialog_menu.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/drawable_category_selector.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/drawable/category_selector.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_dialog_about.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/dialog_about.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_item_channel_group.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/item_channel_group.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_item_channel_sidebar.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/item_channel_sidebar.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_activity_vod_detail.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/activity_vod_detail.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/xml_network_security_config.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/xml/network_security_config.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_dialog_login.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/dialog_login.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_item_episode.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/item_episode.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_dialog_search.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/dialog_search.xml"
+    },
+    {
+        "merged": "com.leafstudio.tvplayer.app-merged_res-55:/layout_activity_media.xml.flat",
+        "source": "com.leafstudio.tvplayer.app-main-58:/layout/activity_media.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_activity_tv_main.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/activity_tv_main.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/mipmap-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_activity_phone_main.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/activity_phone_main.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_activity_vod_player.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/activity_vod_player.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_dialog_decoder_select.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/dialog_decoder_select.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/layout_sidebar_channel_list.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/layout/sidebar_channel_list.xml"
+    },
+    {
+        "merged": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-merged_res-55:/drawable_channel_button_bg.xml.flat",
+        "source": "/Users/mac/.gradle/daemon/8.2/com.leafstudio.tvplayer.app-main-58:/drawable/channel_button_bg.xml"
+    }
+]
